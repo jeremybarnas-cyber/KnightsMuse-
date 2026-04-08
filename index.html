@@ -5,81 +5,90 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>KnightsMuse</title>
 <meta name="description" content="The ultimate Vegas Golden Knights stat app" />
-<meta name="theme-color" content="#8B6914" />
+<meta name="theme-color" content="#B4975A" />
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="logo.png" />
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; min-height: 100vh; }
-.km-header { background: #8B6914; padding: 14px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
-.km-logo { height: 34px; object-fit: contain; }
-.km-logo-text { color: #fff; font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
-.km-nav { display: flex; gap: 5px; margin-left: auto; flex-wrap: wrap; }
-.km-nav button { background: rgba(255,255,255,0.18); border: none; color: #fff; font-size: 13px; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; }
-.km-nav button.active, .km-nav button:hover { background: rgba(255,255,255,0.35); }
-.km-search-bar { background: #333F48; padding: 14px 20px; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #111; min-height: 100vh; color: #f0ede6; }
+.km-header { background: #000; border-bottom: 1px solid #B4975A44; padding: 12px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
+.km-logo-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 10px; }
+.km-logo { height: 32px; object-fit: contain; }
+.km-logo-text { color: #B4975A; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+.km-nav { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+.km-nav button { background: transparent; border: 1px solid #333; color: #aaa; font-size: 13px; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.km-nav button.active { background: #B4975A; border-color: #B4975A; color: #000; font-weight: 600; }
+.km-nav button:hover:not(.active) { border-color: #B4975A; color: #B4975A; }
+.km-search-bar { background: #0a0a0a; border-bottom: 1px solid #1e1e1e; padding: 14px 20px; }
 .km-search-wrap { display: flex; gap: 8px; max-width: 700px; margin: 0 auto; }
-.km-search-wrap input { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 15px; padding: 10px 14px; border-radius: 8px; font-family: inherit; outline: none; }
-.km-search-wrap input::placeholder { color: rgba(255,255,255,0.45); }
-.km-search-wrap button { background: #B4975A; border: none; color: #fff; font-size: 14px; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 500; }
-.km-content { padding: 20px; max-width: 900px; margin: 0 auto; }
-.km-answer-card { background: #fff; border: 1px solid #e5e3dc; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-.km-answer-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
-.km-answer-main { font-size: 24px; font-weight: 600; color: #1a1a1a; line-height: 1.2; margin-bottom: 4px; }
-.km-answer-sub { font-size: 14px; color: #666; }
-.km-section-title { font-size: 12px; font-weight: 500; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-.km-player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
-.km-player-card { background: #fff; border: 1px solid #e5e3dc; border-radius: 12px; overflow: hidden; cursor: pointer; transition: border-color 0.15s; }
-.km-player-card:hover { border-color: #B4975A; }
-.km-player-card.active { border-color: #B4975A; border-width: 2px; }
-.km-player-avatar { width: 100%; aspect-ratio: 4/3; background: #8B6914; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 600; color: #fff; }
-.km-player-info { padding: 10px 12px; }
-.km-player-name { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 1px; }
-.km-player-pos { font-size: 11px; color: #999; margin-bottom: 7px; }
-.km-stat-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
-.km-stat-label { font-size: 11px; color: #888; }
-.km-stat-val { font-size: 11px; font-weight: 600; color: #1a1a1a; }
-.km-detail-card { background: #fff; border: 1px solid #e5e3dc; border-radius: 12px; overflow: hidden; display: flex; margin-bottom: 20px; }
-.km-detail-avatar { width: 140px; flex-shrink: 0; background: #8B6914; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 600; color: #fff; }
-.km-detail-info { padding: 18px 20px; flex: 1; }
-.km-detail-name { font-size: 20px; font-weight: 600; color: #1a1a1a; margin-bottom: 2px; }
-.km-detail-pos { font-size: 13px; color: #999; margin-bottom: 14px; }
-.km-detail-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; }
-.km-detail-stat { background: #f5f4f0; border-radius: 8px; padding: 10px; text-align: center; }
-.km-detail-stat-val { font-size: 20px; font-weight: 600; color: #1a1a1a; }
-.km-detail-stat-lbl { font-size: 10px; color: #888; margin-top: 2px; text-transform: uppercase; }
-.km-milestone-list { display: flex; flex-direction: column; gap: 8px; }
-.km-milestone { background: #fff; border: 1px solid #e5e3dc; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
-.km-milestone-icon { width: 36px; height: 36px; border-radius: 50%; background: rgba(180,151,90,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
-.km-milestone-text { flex: 1; }
-.km-milestone-title { font-size: 14px; font-weight: 600; color: #1a1a1a; }
-.km-milestone-desc { font-size: 13px; color: #666; margin-top: 2px; }
-.km-milestone-year { font-size: 12px; color: #999; flex-shrink: 0; }
-.km-tabs { display: flex; border-bottom: 1px solid #e5e3dc; margin-bottom: 20px; }
-.km-tab { font-size: 14px; color: #888; padding: 10px 16px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit; background: none; border-top: none; border-left: none; border-right: none; }
-.km-tab.active { color: #B4975A; border-bottom-color: #B4975A; font-weight: 600; }
+.km-search-wrap input { flex: 1; background: #1a1a1a; border: 1px solid #333; color: #f0ede6; font-size: 15px; padding: 10px 14px; border-radius: 8px; font-family: inherit; outline: none; }
+.km-search-wrap input::placeholder { color: #555; }
+.km-search-wrap input:focus { border-color: #B4975A; }
+.km-search-wrap button { background: #B4975A; border: none; color: #000; font-size: 14px; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 700; }
+.km-content { padding: 20px; max-width: 1100px; margin: 0 auto; }
+.km-home-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+@media (max-width: 800px) { .km-home-grid { grid-template-columns: 1fr; } }
+.km-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.km-card-header { padding: 12px 16px; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; gap: 8px; }
+.km-card-title { font-size: 13px; font-weight: 600; color: #B4975A; text-transform: uppercase; letter-spacing: 0.5px; }
+.km-answer-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.km-answer-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+.km-answer-main { font-size: 24px; font-weight: 700; color: #f0ede6; line-height: 1.2; margin-bottom: 4px; }
+.km-answer-sub { font-size: 14px; color: #888; }
 .km-suggest { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-.km-suggest button { background: #fff; border: 1px solid #e5e3dc; color: #555; font-size: 13px; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-family: inherit; }
-.km-suggest button:hover { border-color: #B4975A; color: #1a1a1a; }
-.km-loading { text-align: center; padding: 30px; color: #999; font-size: 14px; }
-.km-feed-label { font-size: 12px; font-weight: 500; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-.km-feed-wrap { background: #fff; border: 1px solid #e5e3dc; border-radius: 12px; overflow: hidden; padding: 16px; }
-.km-live-badge { display: inline-block; background: #B4975A; color: #fff; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; margin-left: 8px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.4px; }
-.km-logo-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; }
-.km-standings-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e5e3dc; }
-.km-standings-table th { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.4px; padding: 10px 12px; text-align: center; background: #f5f4f0; border-bottom: 1px solid #e5e3dc; }
-.km-standings-table th:first-child { text-align: left; }
-.km-standings-table td { font-size: 13px; color: #1a1a1a; padding: 10px 12px; text-align: center; border-bottom: 1px solid #f0ede6; }
-.km-standings-table td:first-child { text-align: left; font-weight: 500; }
+.km-suggest button { background: #1a1a1a; border: 1px solid #2a2a2a; color: #888; font-size: 13px; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-family: inherit; }
+.km-suggest button:hover { border-color: #B4975A; color: #B4975A; }
+.km-standings-table { width: 100%; border-collapse: collapse; }
+.km-standings-table th { font-size: 10px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.4px; padding: 8px 10px; text-align: center; background: #111; border-bottom: 1px solid #2a2a2a; }
+.km-standings-table th:nth-child(2) { text-align: left; }
+.km-standings-table td { font-size: 12px; color: #bbb; padding: 8px 10px; text-align: center; border-bottom: 1px solid #1e1e1e; }
+.km-standings-table td:nth-child(2) { text-align: left; font-weight: 500; color: #f0ede6; }
 .km-standings-table tr:last-child td { border-bottom: none; }
-.km-standings-table tr.vgk-row td { background: rgba(180,151,90,0.08); font-weight: 600; }
-.km-standings-table tr:hover td { background: #faf9f6; }
-.km-standings-table tr.vgk-row:hover td { background: rgba(180,151,90,0.14); }
-.km-div-label { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px; }
+.km-standings-table tr.vgk-row td { background: #B4975A15; }
+.km-standings-table tr.vgk-row td:nth-child(2) { color: #B4975A; font-weight: 700; }
+.km-standings-table tr.vgk-row td:nth-child(7) { color: #B4975A; font-weight: 700; }
+.km-div-label { font-size: 11px; font-weight: 700; color: #B4975A; text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 14px 6px; background: #111; border-bottom: 1px solid #2a2a2a; }
+.km-section-title { font-size: 12px; font-weight: 600; color: #666; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.km-player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.km-player-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; overflow: hidden; cursor: pointer; transition: border-color 0.15s; }
+.km-player-card:hover { border-color: #B4975A55; }
+.km-player-card.active { border-color: #B4975A; border-width: 2px; }
+.km-player-avatar { width: 100%; aspect-ratio: 4/3; background: #8B6914; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: #fff; }
+.km-player-photo { width: 100%; aspect-ratio: 4/3; object-fit: cover; object-position: top; display: block; }
+.km-player-info { padding: 10px 12px; }
+.km-player-name { font-size: 12px; font-weight: 600; color: #f0ede6; margin-bottom: 1px; }
+.km-player-pos { font-size: 10px; color: #555; margin-bottom: 7px; }
+.km-stat-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.km-stat-label { font-size: 10px; color: #555; }
+.km-stat-val { font-size: 10px; font-weight: 600; color: #f0ede6; }
+.km-detail-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; overflow: hidden; display: flex; margin-bottom: 20px; }
+.km-detail-avatar { width: 150px; flex-shrink: 0; background: #8B6914; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 700; color: #fff; }
+.km-detail-photo { width: 150px; flex-shrink: 0; object-fit: cover; object-position: top; }
+.km-detail-info { padding: 20px; flex: 1; }
+.km-detail-name { font-size: 22px; font-weight: 700; color: #f0ede6; margin-bottom: 2px; }
+.km-detail-pos { font-size: 13px; color: #555; margin-bottom: 14px; }
+.km-detail-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 8px; }
+.km-detail-stat { background: #111; border-radius: 8px; padding: 10px; text-align: center; border: 1px solid #2a2a2a; }
+.km-detail-stat-val { font-size: 20px; font-weight: 700; color: #B4975A; }
+.km-detail-stat-lbl { font-size: 10px; color: #555; margin-top: 2px; text-transform: uppercase; }
+.km-milestone-list { display: flex; flex-direction: column; gap: 8px; }
+.km-milestone { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
+.km-milestone-icon { width: 36px; height: 36px; border-radius: 50%; background: #B4975A22; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+.km-milestone-text { flex: 1; }
+.km-milestone-title { font-size: 14px; font-weight: 600; color: #f0ede6; }
+.km-milestone-desc { font-size: 13px; color: #888; margin-top: 2px; }
+.km-milestone-year { font-size: 12px; color: #555; flex-shrink: 0; }
+.km-tabs { display: flex; border-bottom: 1px solid #2a2a2a; margin-bottom: 20px; }
+.km-tab { font-size: 14px; color: #555; padding: 10px 16px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit; background: none; border-top: none; border-left: none; border-right: none; }
+.km-tab.active { color: #B4975A; border-bottom-color: #B4975A; font-weight: 600; }
+.km-feed-wrap { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; overflow: hidden; padding: 12px; }
+.km-live-badge { display: inline-block; background: #B4975A; color: #000; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-left: 8px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.4px; }
+.km-loading { text-align: center; padding: 30px; color: #444; font-size: 14px; }
+.km-pos-group { font-size: 11px; font-weight: 700; color: #B4975A; text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 8px; }
 @media (max-width: 500px) {
   .km-detail-card { flex-direction: column; }
-  .km-detail-avatar { width: 100%; height: 120px; }
-  .km-nav button { font-size: 12px; padding: 5px 9px; }
+  .km-detail-avatar, .km-detail-photo { width: 100%; height: 130px; }
+  .km-nav button { font-size: 11px; padding: 5px 8px; }
 }
 </style>
 </head>
@@ -91,7 +100,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <span class="km-logo-text" style="display:none;">KnightsMuse</span>
   </button>
   <nav class="km-nav">
-    <button class="active" onclick="showTab('search')">Search</button>
+    <button class="active" onclick="showTab('search')">Home</button>
     <button onclick="showTab('players')">Players</button>
     <button onclick="showTab('records')">Records</button>
     <button onclick="showTab('standings')">Standings</button>
@@ -107,6 +116,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 </div>
 
 <div class="km-content">
+
   <div id="tab-search">
     <div class="km-suggest">
       <button onclick="setQ('Jack Eichel stats')">Eichel stats</button>
@@ -114,15 +124,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button onclick="setQ('points leader')">Points leader</button>
       <button onclick="setQ('Stanley Cup')">Stanley Cup</button>
     </div>
-    <div id="answer-area"></div>
+    <div id="answer-area" style="margin-bottom:16px;"></div>
+    <div class="km-home-grid">
+      <div>
+        <div class="km-card">
+          <div class="km-card-header">
+            <span class="km-card-title">Pacific Division</span>
+            <span class="km-live-badge">Live</span>
+          </div>
+          <div id="home-standings"><div class="km-loading">Loading...</div></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">@KnightsMuse_ on X</div>
+        <div class="km-feed-wrap">
+          <a class="twitter-timeline" data-height="480" data-theme="dark" href="https://twitter.com/KnightsMuse_">Tweets by KnightsMuse_</a>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="tab-players" style="display:none">
-    <div style="display:flex;align-items:center;margin-bottom:12px;">
-      <span class="km-section-title" style="margin:0;">2025–26 roster</span>
+    <div style="display:flex;align-items:center;margin-bottom:16px;">
+      <span class="km-section-title" style="margin:0;">2025–26 full roster</span>
       <span class="km-live-badge">Live</span>
     </div>
-    <div id="player-grid" class="km-player-grid"><div class="km-loading">Loading stats...</div></div>
+    <div id="player-grid"></div>
     <div id="player-detail"></div>
   </div>
 
@@ -135,57 +162,61 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div id="records-list"></div>
   </div>
 
-  <div id="tab-feed" style="display:none">
-    <div class="km-feed-label">@KnightsMuse on X</div>
-    <div class="km-feed-wrap">
-      <a class="twitter-timeline" data-height="600" href="https://twitter.com/KnightsMuse">Tweets by KnightsMuse</a>
-    </div>
-  </div>
-
   <div id="tab-standings" style="display:none">
     <div style="display:flex;align-items:center;margin-bottom:16px;">
       <span class="km-section-title" style="margin:0;">2025–26 NHL standings</span>
       <span class="km-live-badge">Live</span>
     </div>
-    <div id="standings-content"><div class="km-loading">Loading standings...</div></div>
+    <div id="standings-full"><div class="km-loading">Loading standings...</div></div>
   </div>
+
+  <div id="tab-feed" style="display:none">
+    <div style="font-size:12px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">@KnightsMuse_ on X</div>
+    <div class="km-feed-wrap">
+      <a class="twitter-timeline" data-height="700" data-theme="dark" href="https://twitter.com/KnightsMuse_">Tweets by KnightsMuse_</a>
+    </div>
+  </div>
+
 </div>
 
 <script>
-// VGK NHL team ID is 54
-const VGK_TEAM_ID = 54;
 const SEASON = "20252026";
 
-// Player roster — NHL player IDs for live stat lookup
 const ROSTER = [
-  { name: "Jack Eichel",       id: 8478403, pos: "C"  },
-  { name: "Mark Stone",        id: 8476925, pos: "RW" },
-  { name: "William Karlsson",  id: 8477946, pos: "C"  },
-  { name: "Ivan Barbashev",    id: 8478009, pos: "LW" },
-  { name: "Shea Theodore",     id: 8478051, pos: "D"  },
-  { name: "Alex Pietrangelo",  id: 8473419, pos: "D"  },
-  { name: "Pavel Dorofeyev",   id: 8482671, pos: "LW" },
-  { name: "Mitch Marner",      id: 8478483, pos: "RW" },
-  { name: "Thomas Hertl",      id: 8476882, pos: "C"  },
-  { name: "Rasmus Andersson",  id: 8479994, pos: "D"  },
-  { name: "Adin Hill",         id: 8478499, pos: "G"  },
-  { name: "Akira Schmid",      id: 8482218, pos: "G"  },
+  { name: "Jack Eichel",        id: 8478403, pos: "C",  img: null },
+  { name: "Mark Stone",         id: 8476925, pos: "RW", img: null },
+  { name: "William Karlsson",   id: 8477946, pos: "C",  img: null },
+  { name: "Ivan Barbashev",     id: 8478009, pos: "LW", img: null },
+  { name: "Mitch Marner",       id: 8478483, pos: "RW", img: null },
+  { name: "Pavel Dorofeyev",    id: 8482671, pos: "LW", img: null },
+  { name: "Thomas Hertl",       id: 8476882, pos: "C",  img: null },
+  { name: "Nicolas Roy",        id: 8480823, pos: "C",  img: null },
+  { name: "Brett Howden",       id: 8480833, pos: "C",  img: null },
+  { name: "Tanner Pearson",     id: 8476871, pos: "LW", img: null },
+  { name: "Michael Amadio",     id: 8478507, pos: "C",  img: null },
+  { name: "Keegan Kolesar",     id: 8480600, pos: "RW", img: null },
+  { name: "Reilly Smith",       id: 8476879, pos: "RW", img: null },
+  { name: "Shea Theodore",      id: 8478051, pos: "D",  img: null },
+  { name: "Alex Pietrangelo",   id: 8473419, pos: "D",  img: null },
+  { name: "Rasmus Andersson",   id: 8479994, pos: "D",  img: null },
+  { name: "Zach Whitecloud",    id: 8481533, pos: "D",  img: null },
+  { name: "Brayden McNabb",     id: 8476368, pos: "D",  img: null },
+  { name: "Noah Hanifin",       id: 8478476, pos: "D",  img: null },
+  { name: "Nicolas Hague",      id: 8480817, pos: "D",  img: null },
+  { name: "Adin Hill",          id: 8478499, pos: "G",  img: null },
+  { name: "Akira Schmid",       id: 8482218, pos: "G",  img: null },
 ];
 
 let playerStats = {};
 let statsLoaded = false;
 
-function initials(name) {
-  return name.split(' ').map(n => n[0]).join('');
-}
+function initials(n) { return n.split(' ').map(w => w[0]).join(''); }
 
-async function fetchPlayerStats(playerId) {
+async function fetchPlayerStats(id) {
   try {
-    const res = await fetch(`https://api-web.nhle.com/v1/player/${playerId}/landing`);
-    const data = await res.json();
-    const season = data.seasonTotals?.find(s => s.season === parseInt(SEASON) && s.gameTypeId === 2);
-    if (!season) return null;
-    return season;
+    const r = await fetch(`https://api-web.nhle.com/v1/player/${id}/landing`);
+    const d = await r.json();
+    return d.seasonTotals?.find(s => s.season === parseInt(SEASON) && s.gameTypeId === 2) || null;
   } catch(e) { return null; }
 }
 
@@ -196,242 +227,207 @@ async function loadAllStats() {
   statsLoaded = true;
 }
 
+function avatarEl(p, isDetail) {
+  if (p.img) return `<img class="${isDetail ? 'km-detail-photo' : 'km-player-photo'}" src="${p.img}" alt="${p.name}" />`;
+  return `<div class="${isDetail ? 'km-detail-avatar' : 'km-player-avatar'}">${initials(p.name)}</div>`;
+}
+
+function sc(val, lbl) {
+  return `<div class="km-detail-stat"><div class="km-detail-stat-val">${val}</div><div class="km-detail-stat-lbl">${lbl}</div></div>`;
+}
+
 async function renderPlayers() {
   const grid = document.getElementById("player-grid");
-  grid.innerHTML = '<div class="km-loading">Loading live stats...</div>';
+  grid.innerHTML = '<div class="km-loading">Loading live roster stats...</div>';
   await loadAllStats();
-  grid.innerHTML = ROSTER.map((p, i) => {
-    const s = playerStats[p.id];
-    let statsHtml = '';
-    if (p.pos === 'G') {
-      statsHtml = s
-        ? `<div class="km-stat-row"><span class="km-stat-label">W</span><span class="km-stat-val">${s.wins ?? '—'}</span></div>
-           <div class="km-stat-row"><span class="km-stat-label">SV%</span><span class="km-stat-val">${s.savePctg ? s.savePctg.toFixed(3) : '—'}</span></div>
-           <div class="km-stat-row"><span class="km-stat-label">GAA</span><span class="km-stat-val">${s.goalsAgainstAvg ? s.goalsAgainstAvg.toFixed(2) : '—'}</span></div>`
-        : `<div class="km-stat-row"><span class="km-stat-label">Stats</span><span class="km-stat-val">N/A</span></div>`;
-    } else {
-      statsHtml = s
-        ? `<div class="km-stat-row"><span class="km-stat-label">PTS</span><span class="km-stat-val">${s.points ?? '—'}</span></div>
-           <div class="km-stat-row"><span class="km-stat-label">G</span><span class="km-stat-val">${s.goals ?? '—'}</span></div>
-           <div class="km-stat-row"><span class="km-stat-label">A</span><span class="km-stat-val">${s.assists ?? '—'}</span></div>`
-        : `<div class="km-stat-row"><span class="km-stat-label">Stats</span><span class="km-stat-val">Loading...</span></div>`;
+  const groups = [
+    { label: "Forwards", players: ROSTER.filter(p => p.pos !== 'D' && p.pos !== 'G') },
+    { label: "Defense",  players: ROSTER.filter(p => p.pos === 'D') },
+    { label: "Goalies",  players: ROSTER.filter(p => p.pos === 'G') },
+  ];
+  let html = '';
+  for (const g of groups) {
+    html += `<div class="km-pos-group">${g.label}</div><div class="km-player-grid">`;
+    for (const p of g.players) {
+      const idx = ROSTER.indexOf(p);
+      const s = playerStats[p.id];
+      let sr = '';
+      if (p.pos === 'G') {
+        sr = s ? `<div class="km-stat-row"><span class="km-stat-label">W</span><span class="km-stat-val">${s.wins??'—'}</span></div>
+          <div class="km-stat-row"><span class="km-stat-label">SV%</span><span class="km-stat-val">${s.savePctg?s.savePctg.toFixed(3):'—'}</span></div>
+          <div class="km-stat-row"><span class="km-stat-label">GAA</span><span class="km-stat-val">${s.goalsAgainstAvg?s.goalsAgainstAvg.toFixed(2):'—'}</span></div>` : '<div class="km-stat-row"><span class="km-stat-label">Stats</span><span class="km-stat-val">—</span></div>';
+      } else {
+        sr = s ? `<div class="km-stat-row"><span class="km-stat-label">PTS</span><span class="km-stat-val">${s.points??'—'}</span></div>
+          <div class="km-stat-row"><span class="km-stat-label">G</span><span class="km-stat-val">${s.goals??'—'}</span></div>
+          <div class="km-stat-row"><span class="km-stat-label">A</span><span class="km-stat-val">${s.assists??'—'}</span></div>` : '<div class="km-stat-row"><span class="km-stat-label">PTS</span><span class="km-stat-val">—</span></div>';
+      }
+      html += `<div class="km-player-card" id="pc-${idx}" onclick="selectPlayer(${idx})">${avatarEl(p,false)}<div class="km-player-info"><div class="km-player-name">${p.name}</div><div class="km-player-pos">${p.pos}</div>${sr}</div></div>`;
     }
-    return `<div class="km-player-card" id="pc-${i}" onclick="selectPlayer(${i})">
-      <div class="km-player-avatar">${initials(p.name)}</div>
-      <div class="km-player-info">
-        <div class="km-player-name">${p.name}</div>
-        <div class="km-player-pos">${p.pos} · 2025–26</div>
-        ${statsHtml}
-      </div>
-    </div>`;
-  }).join('');
+    html += '</div>';
+  }
+  grid.innerHTML = html;
 }
 
 function selectPlayer(i) {
   const p = ROSTER[i];
   const s = playerStats[p.id];
   document.querySelectorAll('.km-player-card').forEach(c => c.classList.remove('active'));
-  document.getElementById('pc-' + i).classList.add('active');
-  const det = document.getElementById('player-detail');
-  let statsHtml = '';
+  const card = document.getElementById('pc-' + i);
+  if (card) { card.classList.add('active'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  let sh = '';
   if (p.pos === 'G' && s) {
-    statsHtml = `
-      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.gamesPlayed ?? '—'}</div><div class="km-detail-stat-lbl">GP</div></div>
-      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.wins ?? '—'}</div><div class="km-detail-stat-lbl">W</div></div>
-      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.savePctg ? s.savePctg.toFixed(3) : '—'}</div><div class="km-detail-stat-lbl">SV%</div></div>
-      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.goalsAgainstAvg ? s.goalsAgainstAvg.toFixed(2) : '—'}</div><div class="km-detail-stat-lbl">GAA</div></div>
-      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.shutouts ?? '—'}</div><div class="km-detail-stat-lbl">SO</div></div>`;
+    sh = sc(s.gamesPlayed??'—','GP')+sc(s.wins??'—','W')+sc(s.savePctg?s.savePctg.toFixed(3):'—','SV%')+sc(s.goalsAgainstAvg?s.goalsAgainstAvg.toFixed(2):'—','GAA')+sc(s.shutouts??'—','SO');
   } else if (s) {
-    statsHtml = `
-      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.gamesPlayed ?? '—'}</div><div class="km-detail-stat-lbl">GP</div></div>
-      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.points ?? '—'}</div><div class="km-detail-stat-lbl">PTS</div></div>
-      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.goals ?? '—'}</div><div class="km-detail-stat-lbl">G</div></div>
-      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.assists ?? '—'}</div><div class="km-detail-stat-lbl">A</div></div>
-      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.plusMinus !== undefined ? (s.plusMinus > 0 ? '+' : '') + s.plusMinus : '—'}</div><div class="km-detail-stat-lbl">+/-</div></div>`;
+    sh = sc(s.gamesPlayed??'—','GP')+sc(s.points??'—','PTS')+sc(s.goals??'—','G')+sc(s.assists??'—','A')+sc(s.plusMinus!==undefined?(s.plusMinus>0?'+':'')+s.plusMinus:'—','+/-')+sc(s.pim??'—','PIM');
   }
-  det.innerHTML = `<div class="km-detail-card">
-    <div class="km-detail-avatar">${initials(p.name)}</div>
-    <div class="km-detail-info">
-      <div class="km-detail-name">${p.name}</div>
-      <div class="km-detail-pos">${p.pos} · 2025–26 season</div>
-      <div class="km-detail-stats">${statsHtml || '<div style="color:#999;font-size:13px;">Stats unavailable</div>'}</div>
-    </div>
-  </div>`;
+  document.getElementById('player-detail').innerHTML = `<div class="km-detail-card">${avatarEl(p,true)}<div class="km-detail-info"><div class="km-detail-name">${p.name}</div><div class="km-detail-pos">${p.pos} · 2025–26</div><div class="km-detail-stats">${sh||'<div style="color:#444;font-size:13px;">Stats unavailable</div>'}</div></div></div>`;
 }
 
-// Search — pulls live stats for named players
+async function fetchStandings() {
+  const r = await fetch("https://api-web.nhle.com/v1/standings/now");
+  return (await r.json()).standings;
+}
+
+function buildTable(teams, compact) {
+  return `<table class="km-standings-table"><thead><tr>
+    <th>#</th><th style="text-align:left;">Team</th><th>GP</th><th>W</th><th>L</th><th>OTL</th><th>PTS</th>${!compact?'<th>GF</th><th>GA</th><th>DIFF</th>':''}
+  </tr></thead><tbody>${teams.map((t,i)=>{
+    const vgk = t.teamAbbrev?.default==="VGK";
+    const diff = t.goalFor - t.goalAgainst;
+    return `<tr class="${vgk?'vgk-row':''}"><td>${i+1}</td><td>${vgk?'⚔️ ':''}${t.teamName?.default??t.teamAbbrev?.default}</td><td>${t.gamesPlayed}</td><td>${t.wins}</td><td>${t.losses}</td><td>${t.otLosses}</td><td>${t.points}</td>${!compact?`<td>${t.goalFor}</td><td>${t.goalAgainst}</td><td>${diff>0?'+':''}${diff}</td>`:''}</tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+async function loadHomeStandings() {
+  const el = document.getElementById("home-standings");
+  try {
+    const s = await fetchStandings();
+    const pac = s.filter(t=>t.divisionName==="Pacific").sort((a,b)=>a.divisionSequence-b.divisionSequence);
+    el.innerHTML = buildTable(pac, true);
+  } catch(e) { el.innerHTML='<div class="km-loading">Could not load.</div>'; }
+}
+
+let fullStandingsLoaded = false;
+async function loadFullStandings() {
+  const el = document.getElementById("standings-full");
+  try {
+    const standings = await fetchStandings();
+    let html = "";
+    for (const conf of ["Western","Eastern"]) {
+      html += `<div style="margin-bottom:28px;"><div style="font-size:14px;font-weight:700;color:#f0ede6;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;">${conf} Conference</div>`;
+      const divs = [...new Set(standings.filter(t=>t.conferenceName===conf).map(t=>t.divisionName))];
+      for (const div of divs) {
+        const teams = standings.filter(t=>t.divisionName===div).sort((a,b)=>a.divisionSequence-b.divisionSequence);
+        html += `<div class="km-card" style="margin-bottom:14px;"><div class="km-div-label">${div} Division</div>${buildTable(teams,false)}</div>`;
+      }
+      html += '</div>';
+    }
+    el.innerHTML = html;
+    fullStandingsLoaded = true;
+  } catch(e) { el.innerHTML='<div class="km-loading">Could not load standings.</div>'; }
+}
+
 const qMap = [
-  { match: ["points leader","leading scorer","most points"], fn: async () => {
+  { match:["points leader","leading scorer","most points"], fn: async()=>{
     await loadAllStats();
-    let best = null, bestPts = -1;
-    ROSTER.filter(p => p.pos !== 'G').forEach(p => {
-      const s = playerStats[p.id];
-      if (s && s.points > bestPts) { bestPts = s.points; best = p; }
-    });
-    return best ? { answer: `${best.name} — ${bestPts} points`, sub: `2025–26 season leader` } : null;
+    let best=null,bestPts=-1;
+    ROSTER.filter(p=>p.pos!=='G').forEach(p=>{const s=playerStats[p.id];if(s&&(s.points??0)>bestPts){bestPts=s.points;best=p;}});
+    return best?{answer:`${best.name} — ${bestPts} points`,sub:`2025–26 points leader`}:null;
   }},
-  ...ROSTER.map(p => ({
-    match: [p.name.toLowerCase(), p.name.split(' ')[1].toLowerCase()],
-    fn: async () => {
+  ...ROSTER.map(p=>({
+    match:[p.name.toLowerCase(),p.name.split(' ').slice(-1)[0].toLowerCase()],
+    fn: async()=>{
       await loadAllStats();
-      const s = playerStats[p.id];
-      if (!s) return { answer: `${p.name} — stats unavailable`, sub: '' };
-      if (p.pos === 'G') return { answer: `${p.name} — ${s.wins}W · ${s.savePctg?.toFixed(3)} SV% · ${s.goalsAgainstAvg?.toFixed(2)} GAA`, sub: `${s.gamesPlayed} GP · ${s.shutouts} SO · 2025–26` };
-      return { answer: `${p.name} — ${s.points} PTS (${s.goals} G, ${s.assists} A) in ${s.gamesPlayed} GP`, sub: `${s.plusMinus >= 0 ? '+' : ''}${s.plusMinus} | 2025–26 regular season` };
+      const s=playerStats[p.id];
+      if(!s) return {answer:`${p.name} — stats unavailable`,sub:'Could not load from NHL API'};
+      if(p.pos==='G') return {answer:`${p.name} — ${s.wins}W · ${s.savePctg?.toFixed(3)} SV% · ${s.goalsAgainstAvg?.toFixed(2)} GAA`,sub:`${s.gamesPlayed} GP · ${s.shutouts} SO · 2025–26`};
+      return {answer:`${p.name} — ${s.points} PTS (${s.goals} G, ${s.assists} A) in ${s.gamesPlayed} GP`,sub:`${s.plusMinus>=0?'+':''}${s.plusMinus} | 2025–26`};
     }
   })),
-  { match: ["stanley cup","cup","champions"], fn: async () => ({ answer: "VGK won the Stanley Cup in 2023", sub: "Defeated the Florida Panthers 4–1 · Marchessault won Conn Smythe" }) },
-  { match: ["goals record","single-season goals","most goals in a season"], fn: async () => ({ answer: "Jonathan Marchessault — 41 goals (2022–23)", sub: "VGK single-season goals record" }) },
-  { match: ["all-time wins","franchise wins"], fn: async () => ({ answer: "VGK all-time regular season wins: 335+", sub: "Since the 2017–18 inaugural season" }) },
+  { match:["stanley cup","cup","champions"], fn:async()=>({answer:"VGK won the Stanley Cup in 2023",sub:"Defeated the Florida Panthers 4–1 · Marchessault won Conn Smythe"}) },
+  { match:["goals record","single-season goals"], fn:async()=>({answer:"Jonathan Marchessault — 41 goals (2022–23)",sub:"VGK single-season goals record"}) },
+  { match:["all-time wins","franchise wins"], fn:async()=>({answer:"VGK all-time regular season wins: 335+",sub:"Since the 2017–18 inaugural season"}) },
 ];
 
 async function runQuery() {
-  const raw = document.getElementById("q-input").value.trim();
-  if (!raw) return;
-  const q = raw.toLowerCase();
-  const area = document.getElementById("answer-area");
-  area.innerHTML = '<div class="km-loading">Looking that up...</div>';
-  let found = null;
-  for (const entry of qMap) {
-    if (entry.match.some(kw => q.includes(kw))) { found = entry; break; }
-  }
-  if (found) {
-    const result = await found.fn();
-    if (result) {
-      area.innerHTML = `<div class="km-answer-card"><div class="km-answer-label">KnightsMuse</div><div class="km-answer-main">${result.answer}</div><div class="km-answer-sub">${result.sub}</div></div>`;
-      return;
-    }
-  }
-  area.innerHTML = `<div class="km-answer-card"><div class="km-answer-label">KnightsMuse</div><div class="km-answer-main" style="font-size:18px;color:#999;">No match found</div><div class="km-answer-sub">Try a player name, "points leader", or "Stanley Cup"</div></div>`;
+  const raw=document.getElementById("q-input").value.trim();
+  if(!raw) return;
+  const q=raw.toLowerCase();
+  const area=document.getElementById("answer-area");
+  area.innerHTML='<div class="km-loading">Looking that up...</div>';
+  let found=null;
+  for(const e of qMap){if(e.match.some(kw=>q.includes(kw))){found=e;break;}}
+  if(found){const r=await found.fn();if(r){area.innerHTML=`<div class="km-answer-card"><div class="km-answer-label">KnightsMuse</div><div class="km-answer-main">${r.answer}</div><div class="km-answer-sub">${r.sub}</div></div>`;return;}}
+  area.innerHTML=`<div class="km-answer-card"><div class="km-answer-label">KnightsMuse</div><div class="km-answer-main" style="font-size:18px;color:#444;">No match found</div><div class="km-answer-sub">Try a player name, "points leader", or "Stanley Cup"</div></div>`;
 }
 
-function setQ(text) {
-  document.getElementById("q-input").value = text;
-  runQuery();
-}
+function setQ(t){document.getElementById("q-input").value=t;runQuery();}
 
-const milestones = {
-  franchise: [
-    { icon: "🏆", title: "Stanley Cup champions", desc: "VGK defeated the Florida Panthers 4–1 in 2023", year: "2023" },
-    { icon: "⭐", title: "All-time points leader", desc: "Jonathan Marchessault — 519 pts across 7 seasons", year: "2017–present" },
-    { icon: "🥅", title: "All-time wins leader (G)", desc: "Marc-Andre Fleury — 190 wins in net for VGK", year: "2017–2021" },
-    { icon: "🎯", title: "Single-season points record", desc: "Jack Eichel — 91 points (2022–23)", year: "2022–23" },
-    { icon: "🎯", title: "Single-season goals record", desc: "Jonathan Marchessault — 41 goals (2022–23)", year: "2022–23" },
-    { icon: "📈", title: "Fastest expansion team to Cup", desc: "VGK won the Cup in just their 6th season", year: "2023" },
+const milestones={
+  franchise:[
+    {icon:"🏆",title:"Stanley Cup champions",desc:"VGK defeated the Florida Panthers 4–1 in 2023",year:"2023"},
+    {icon:"⭐",title:"All-time points leader",desc:"Jonathan Marchessault — 519 pts across 7 seasons",year:"2017–present"},
+    {icon:"🥅",title:"All-time wins leader (G)",desc:"Marc-Andre Fleury — 190 wins in net for VGK",year:"2017–2021"},
+    {icon:"🎯",title:"Single-season points record",desc:"Jack Eichel — 91 points (2022–23)",year:"2022–23"},
+    {icon:"🎯",title:"Single-season goals record",desc:"Jonathan Marchessault — 41 goals (2022–23)",year:"2022–23"},
+    {icon:"📈",title:"Fastest expansion team to Cup",desc:"VGK won the Cup in just their 6th season",year:"2023"},
   ],
-  season: [
-    { icon: "📊", title: "Most wins in a season", desc: "VGK — 51 wins (2022–23)", year: "2022–23" },
-    { icon: "📊", title: "Most points in a season", desc: "VGK — 111 points (2022–23)", year: "2022–23" },
-    { icon: "🥅", title: "Best GAA (single season)", desc: "Marc-Andre Fleury — 1.98 GAA (2020–21)", year: "2020–21" },
-    { icon: "🎯", title: "Most goals in a season", desc: "VGK — 263 goals (2022–23)", year: "2022–23" },
+  season:[
+    {icon:"📊",title:"Most wins in a season",desc:"VGK — 51 wins (2022–23)",year:"2022–23"},
+    {icon:"📊",title:"Most points in a season",desc:"VGK — 111 points (2022–23)",year:"2022–23"},
+    {icon:"🥅",title:"Best GAA (single season)",desc:"Marc-Andre Fleury — 1.98 GAA (2020–21)",year:"2020–21"},
+    {icon:"🎯",title:"Most goals in a season",desc:"VGK — 263 goals (2022–23)",year:"2022–23"},
   ],
-  playoff: [
-    { icon: "🏆", title: "Stanley Cup champions", desc: "VGK defeated the Florida Panthers 4–1", year: "2023" },
-    { icon: "⭐", title: "Conn Smythe Trophy", desc: "Marchessault — 13 G, 12 A in 2023 playoffs", year: "2023" },
-    { icon: "📈", title: "Most playoff wins (franchise)", desc: "VGK — 62 all-time playoff wins", year: "2017–present" },
-    { icon: "🔥", title: "Longest playoff win streak", desc: "8 consecutive wins (2023 playoffs)", year: "2023" },
+  playoff:[
+    {icon:"🏆",title:"Stanley Cup champions",desc:"VGK defeated the Florida Panthers 4–1",year:"2023"},
+    {icon:"⭐",title:"Conn Smythe Trophy",desc:"Marchessault — 13 G, 12 A in 2023 playoffs",year:"2023"},
+    {icon:"📈",title:"Most playoff wins (franchise)",desc:"VGK — 62 all-time playoff wins",year:"2017–present"},
+    {icon:"🔥",title:"Longest playoff win streak",desc:"8 consecutive wins (2023 playoffs)",year:"2023"},
   ]
 };
 
-let currentRecTab = "franchise";
-function recTab(key) {
-  currentRecTab = key;
-  document.querySelectorAll(".km-tab").forEach((t, i) => {
-    t.classList.toggle("active", ["franchise","season","playoff"][i] === key);
-  });
+let currentRecTab="franchise";
+function recTab(key){
+  currentRecTab=key;
+  document.querySelectorAll(".km-tab").forEach((t,i)=>{t.classList.toggle("active",["franchise","season","playoff"][i]===key);});
   renderRecords();
 }
-
-function renderRecords() {
-  const list = milestones[currentRecTab];
-  document.getElementById("records-list").innerHTML = `<div class="km-milestone-list">${list.map(m => `
-    <div class="km-milestone">
-      <div class="km-milestone-icon">${m.icon}</div>
-      <div class="km-milestone-text">
-        <div class="km-milestone-title">${m.title}</div>
-        <div class="km-milestone-desc">${m.desc}</div>
-      </div>
-      <div class="km-milestone-year">${m.year}</div>
-    </div>`).join('')}</div>`;
+function renderRecords(){
+  document.getElementById("records-list").innerHTML=`<div class="km-milestone-list">${milestones[currentRecTab].map(m=>`<div class="km-milestone"><div class="km-milestone-icon">${m.icon}</div><div class="km-milestone-text"><div class="km-milestone-title">${m.title}</div><div class="km-milestone-desc">${m.desc}</div></div><div class="km-milestone-year">${m.year}</div></div>`).join('')}</div>`;
 }
 
-function goHome() {
-  document.getElementById("q-input").value = "";
-  document.getElementById("answer-area").innerHTML = "";
+function goHome(){
+  document.getElementById("q-input").value="";
+  document.getElementById("answer-area").innerHTML="";
   showTab('search');
 }
 
-async function loadStandings() {
-  const el = document.getElementById("standings-content");
-  try {
-    const res = await fetch("https://api-web.nhle.com/v1/standings/now");
-    const data = await res.json();
-    const standings = data.standings;
-
-    const conferences = ["Western", "Eastern"];
-    let html = "";
-
-    for (const conf of conferences) {
-      html += `<div class="km-div-label">${conf} Conference</div>`;
-      const divs = [...new Set(standings.filter(t => t.conferenceName === conf).map(t => t.divisionName))];
-      for (const div of divs) {
-        const teams = standings.filter(t => t.divisionName === div).sort((a,b) => a.divisionSequence - b.divisionSequence);
-        html += `<div style="margin-bottom:20px;">
-          <div style="font-size:11px;color:#B4975A;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">${div} Division</div>
-          <table class="km-standings-table">
-            <thead><tr>
-              <th>#</th><th style="text-align:left;">Team</th><th>GP</th><th>W</th><th>L</th><th>OTL</th><th>PTS</th><th>GF</th><th>GA</th>
-            </tr></thead>
-            <tbody>
-              ${teams.map((t, i) => {
-                const isVGK = t.teamAbbrev?.default === "VGK";
-                return `<tr class="${isVGK ? 'vgk-row' : ''}">
-                  <td>${i + 1}</td>
-                  <td>${isVGK ? '⚔️ ' : ''}${t.teamName?.default ?? t.teamAbbrev?.default}</td>
-                  <td>${t.gamesPlayed}</td>
-                  <td>${t.wins}</td>
-                  <td>${t.losses}</td>
-                  <td>${t.otLosses}</td>
-                  <td style="font-weight:600;color:${isVGK?'#8B6914':'#1a1a1a'};">${t.points}</td>
-                  <td>${t.goalFor}</td>
-                  <td>${t.goalAgainst}</td>
-                </tr>`;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>`;
-      }
-    }
-    el.innerHTML = html;
-  } catch(e) {
-    el.innerHTML = '<div class="km-loading">Could not load standings. Check your connection.</div>';
-  }
-}
-
-let standingsLoaded = false;
-
-function showTab(name) {
-  ["search","players","records","feed","standings"].forEach(t => {
-    document.getElementById("tab-" + t).style.display = t === name ? "" : "none";
-  });
-  document.querySelectorAll(".km-nav button").forEach((b, i) => {
-    b.classList.toggle("active", ["search","players","records","standings","feed"][i] === name);
-  });
-  if (name === "players") renderPlayers();
-  if (name === "records") renderRecords();
-  if (name === "feed") loadTwitter();
-  if (name === "standings" && !standingsLoaded) { standingsLoaded = true; loadStandings(); }
-}
-
-let twitterLoaded = false;
-function loadTwitter() {
-  if (twitterLoaded) return;
-  twitterLoaded = true;
-  const s = document.createElement("script");
-  s.src = "https://platform.twitter.com/widgets.js";
-  s.async = true;
+let twitterLoaded=false;
+function loadTwitter(){
+  if(twitterLoaded) return;
+  twitterLoaded=true;
+  const s=document.createElement("script");
+  s.src="https://platform.twitter.com/widgets.js";
+  s.async=true;
   document.body.appendChild(s);
 }
+
+function showTab(name){
+  ["search","players","records","standings","feed"].forEach(t=>{
+    document.getElementById("tab-"+t).style.display=t===name?"":"none";
+  });
+  document.querySelectorAll(".km-nav button").forEach((b,i)=>{
+    b.classList.toggle("active",["search","players","records","standings","feed"][i]===name);
+  });
+  if(name==="search"){loadHomeStandings();loadTwitter();}
+  if(name==="players") renderPlayers();
+  if(name==="records") renderRecords();
+  if(name==="standings"&&!fullStandingsLoaded) loadFullStandings();
+  if(name==="feed") loadTwitter();
+}
+
+loadHomeStandings();
+loadTwitter();
 </script>
 </body>
 </html>
