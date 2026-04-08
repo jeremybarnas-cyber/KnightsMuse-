@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KnightsMuse</title>
+<meta name="description" content="The ultimate Vegas Golden Knights stat app" />
+<meta name="theme-color" content="#8B6914" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="logo.png" />
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; min-height: 100vh; }
+.km-header { background: #8B6914; padding: 14px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
+.km-logo { height: 34px; object-fit: contain; }
+.km-logo-text { color: #fff; font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+.km-nav { display: flex; gap: 5px; margin-left: auto; flex-wrap: wrap; }
+.km-nav button { background: rgba(255,255,255,0.18); border: none; color: #fff; font-size: 13px; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+.km-nav button.active, .km-nav button:hover { background: rgba(255,255,255,0.35); }
+.km-search-bar { background: #333F48; padding: 14px 20px; }
+.km-search-wrap { display: flex; gap: 8px; max-width: 700px; margin: 0 auto; }
+.km-search-wrap input { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 15px; padding: 10px 14px; border-radius: 8px; font-family: inherit; outline: none; }
+.km-search-wrap input::placeholder { color: rgba(255,255,255,0.45); }
+.km-search-wrap button { background: #B4975A; border: none; color: #fff; font-size: 14px; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 500; }
+.km-content { padding: 20px; max-width: 900px; margin: 0 auto; }
+.km-answer-card { background: #fff; border: 1px solid #e5e3dc; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.km-answer-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+.km-answer-main { font-size: 24px; font-weight: 600; color: #1a1a1a; line-height: 1.2; margin-bottom: 4px; }
+.km-answer-sub { font-size: 14px; color: #666; }
+.km-section-title { font-size: 12px; font-weight: 500; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.km-player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.km-player-card { background: #fff; border: 1px solid #e5e3dc; border-radius: 12px; overflow: hidden; cursor: pointer; transition: border-color 0.15s; }
+.km-player-card:hover { border-color: #B4975A; }
+.km-player-card.active { border-color: #B4975A; border-width: 2px; }
+.km-player-avatar { width: 100%; aspect-ratio: 4/3; background: #8B6914; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 600; color: #fff; }
+.km-player-info { padding: 10px 12px; }
+.km-player-name { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 1px; }
+.km-player-pos { font-size: 11px; color: #999; margin-bottom: 7px; }
+.km-stat-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.km-stat-label { font-size: 11px; color: #888; }
+.km-stat-val { font-size: 11px; font-weight: 600; color: #1a1a1a; }
+.km-detail-card { background: #fff; border: 1px solid #e5e3dc; border-radius: 12px; overflow: hidden; display: flex; margin-bottom: 20px; }
+.km-detail-avatar { width: 140px; flex-shrink: 0; background: #8B6914; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 600; color: #fff; }
+.km-detail-info { padding: 18px 20px; flex: 1; }
+.km-detail-name { font-size: 20px; font-weight: 600; color: #1a1a1a; margin-bottom: 2px; }
+.km-detail-pos { font-size: 13px; color: #999; margin-bottom: 14px; }
+.km-detail-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; }
+.km-detail-stat { background: #f5f4f0; border-radius: 8px; padding: 10px; text-align: center; }
+.km-detail-stat-val { font-size: 20px; font-weight: 600; color: #1a1a1a; }
+.km-detail-stat-lbl { font-size: 10px; color: #888; margin-top: 2px; text-transform: uppercase; }
+.km-milestone-list { display: flex; flex-direction: column; gap: 8px; }
+.km-milestone { background: #fff; border: 1px solid #e5e3dc; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
+.km-milestone-icon { width: 36px; height: 36px; border-radius: 50%; background: rgba(180,151,90,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+.km-milestone-text { flex: 1; }
+.km-milestone-title { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+.km-milestone-desc { font-size: 13px; color: #666; margin-top: 2px; }
+.km-milestone-year { font-size: 12px; color: #999; flex-shrink: 0; }
+.km-tabs { display: flex; border-bottom: 1px solid #e5e3dc; margin-bottom: 20px; }
+.km-tab { font-size: 14px; color: #888; padding: 10px 16px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit; background: none; border-top: none; border-left: none; border-right: none; }
+.km-tab.active { color: #B4975A; border-bottom-color: #B4975A; font-weight: 600; }
+.km-suggest { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.km-suggest button { background: #fff; border: 1px solid #e5e3dc; color: #555; font-size: 13px; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-family: inherit; }
+.km-suggest button:hover { border-color: #B4975A; color: #1a1a1a; }
+.km-loading { text-align: center; padding: 30px; color: #999; font-size: 14px; }
+.km-feed-label { font-size: 12px; font-weight: 500; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.km-feed-wrap { background: #fff; border: 1px solid #e5e3dc; border-radius: 12px; overflow: hidden; padding: 16px; }
+.km-live-badge { display: inline-block; background: #B4975A; color: #fff; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; margin-left: 8px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.4px; }
+@media (max-width: 500px) {
+  .km-detail-card { flex-direction: column; }
+  .km-detail-avatar { width: 100%; height: 120px; }
+  .km-nav button { font-size: 12px; padding: 5px 9px; }
+}
+</style>
+</head>
+<body>
+
+<div class="km-header">
+  <span class="km-logo-text">KnightsMuse</span>
+  <nav class="km-nav">
+    <button class="active" onclick="showTab('search')">Search</button>
+    <button onclick="showTab('players')">Players</button>
+    <button onclick="showTab('records')">Records</button>
+    <button onclick="showTab('feed')">Feed</button>
+  </nav>
+</div>
+
+<div class="km-search-bar">
+  <div class="km-search-wrap">
+    <input id="q-input" type="text" placeholder="Ask anything about the Golden Knights..." onkeydown="if(event.key==='Enter')runQuery()" />
+    <button onclick="runQuery()">Ask</button>
+  </div>
+</div>
+
+<div class="km-content">
+  <div id="tab-search">
+    <div class="km-suggest">
+      <button onclick="setQ('Jack Eichel stats')">Eichel stats</button>
+      <button onclick="setQ('Mark Stone stats')">Stone stats</button>
+      <button onclick="setQ('points leader')">Points leader</button>
+      <button onclick="setQ('Stanley Cup')">Stanley Cup</button>
+    </div>
+    <div id="answer-area"></div>
+  </div>
+
+  <div id="tab-players" style="display:none">
+    <div style="display:flex;align-items:center;margin-bottom:12px;">
+      <span class="km-section-title" style="margin:0;">2025–26 roster</span>
+      <span class="km-live-badge">Live</span>
+    </div>
+    <div id="player-grid" class="km-player-grid"><div class="km-loading">Loading stats...</div></div>
+    <div id="player-detail"></div>
+  </div>
+
+  <div id="tab-records" style="display:none">
+    <div class="km-tabs">
+      <button class="km-tab active" onclick="recTab('franchise')">Franchise</button>
+      <button class="km-tab" onclick="recTab('season')">Season</button>
+      <button class="km-tab" onclick="recTab('playoff')">Playoff</button>
+    </div>
+    <div id="records-list"></div>
+  </div>
+
+  <div id="tab-feed" style="display:none">
+    <div class="km-feed-label">@KnightsMuse on X</div>
+    <div class="km-feed-wrap">
+      <a class="twitter-timeline" data-height="600" href="https://twitter.com/KnightsMuse">Tweets by KnightsMuse</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// VGK NHL team ID is 54
+const VGK_TEAM_ID = 54;
+const SEASON = "20252026";
+
+// Player roster — NHL player IDs for live stat lookup
+const ROSTER = [
+  { name: "Jack Eichel",       id: 8478403, pos: "C"  },
+  { name: "Mark Stone",        id: 8476925, pos: "RW" },
+  { name: "William Karlsson",  id: 8477946, pos: "C"  },
+  { name: "Ivan Barbashev",    id: 8478009, pos: "LW" },
+  { name: "Shea Theodore",     id: 8478051, pos: "D"  },
+  { name: "Alex Pietrangelo",  id: 8473419, pos: "D"  },
+  { name: "Pavel Dorofeyev",   id: 8482671, pos: "LW" },
+  { name: "Mitch Marner",      id: 8478483, pos: "RW" },
+  { name: "Thomas Hertl",      id: 8476882, pos: "C"  },
+  { name: "Rasmus Andersson",  id: 8479994, pos: "D"  },
+  { name: "Adin Hill",         id: 8478499, pos: "G"  },
+  { name: "Akira Schmid",      id: 8482218, pos: "G"  },
+];
+
+let playerStats = {};
+let statsLoaded = false;
+
+function initials(name) {
+  return name.split(' ').map(n => n[0]).join('');
+}
+
+async function fetchPlayerStats(playerId) {
+  try {
+    const res = await fetch(`https://api-web.nhle.com/v1/player/${playerId}/landing`);
+    const data = await res.json();
+    const season = data.seasonTotals?.find(s => s.season === parseInt(SEASON) && s.gameTypeId === 2);
+    if (!season) return null;
+    return season;
+  } catch(e) { return null; }
+}
+
+async function loadAllStats() {
+  if (statsLoaded) return;
+  const results = await Promise.all(ROSTER.map(p => fetchPlayerStats(p.id)));
+  ROSTER.forEach((p, i) => { playerStats[p.id] = results[i]; });
+  statsLoaded = true;
+}
+
+async function renderPlayers() {
+  const grid = document.getElementById("player-grid");
+  grid.innerHTML = '<div class="km-loading">Loading live stats...</div>';
+  await loadAllStats();
+  grid.innerHTML = ROSTER.map((p, i) => {
+    const s = playerStats[p.id];
+    let statsHtml = '';
+    if (p.pos === 'G') {
+      statsHtml = s
+        ? `<div class="km-stat-row"><span class="km-stat-label">W</span><span class="km-stat-val">${s.wins ?? '—'}</span></div>
+           <div class="km-stat-row"><span class="km-stat-label">SV%</span><span class="km-stat-val">${s.savePctg ? s.savePctg.toFixed(3) : '—'}</span></div>
+           <div class="km-stat-row"><span class="km-stat-label">GAA</span><span class="km-stat-val">${s.goalsAgainstAvg ? s.goalsAgainstAvg.toFixed(2) : '—'}</span></div>`
+        : `<div class="km-stat-row"><span class="km-stat-label">Stats</span><span class="km-stat-val">N/A</span></div>`;
+    } else {
+      statsHtml = s
+        ? `<div class="km-stat-row"><span class="km-stat-label">PTS</span><span class="km-stat-val">${s.points ?? '—'}</span></div>
+           <div class="km-stat-row"><span class="km-stat-label">G</span><span class="km-stat-val">${s.goals ?? '—'}</span></div>
+           <div class="km-stat-row"><span class="km-stat-label">A</span><span class="km-stat-val">${s.assists ?? '—'}</span></div>`
+        : `<div class="km-stat-row"><span class="km-stat-label">Stats</span><span class="km-stat-val">Loading...</span></div>`;
+    }
+    return `<div class="km-player-card" id="pc-${i}" onclick="selectPlayer(${i})">
+      <div class="km-player-avatar">${initials(p.name)}</div>
+      <div class="km-player-info">
+        <div class="km-player-name">${p.name}</div>
+        <div class="km-player-pos">${p.pos} · 2025–26</div>
+        ${statsHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectPlayer(i) {
+  const p = ROSTER[i];
+  const s = playerStats[p.id];
+  document.querySelectorAll('.km-player-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('pc-' + i).classList.add('active');
+  const det = document.getElementById('player-detail');
+  let statsHtml = '';
+  if (p.pos === 'G' && s) {
+    statsHtml = `
+      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.gamesPlayed ?? '—'}</div><div class="km-detail-stat-lbl">GP</div></div>
+      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.wins ?? '—'}</div><div class="km-detail-stat-lbl">W</div></div>
+      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.savePctg ? s.savePctg.toFixed(3) : '—'}</div><div class="km-detail-stat-lbl">SV%</div></div>
+      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.goalsAgainstAvg ? s.goalsAgainstAvg.toFixed(2) : '—'}</div><div class="km-detail-stat-lbl">GAA</div></div>
+      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.shutouts ?? '—'}</div><div class="km-detail-stat-lbl">SO</div></div>`;
+  } else if (s) {
+    statsHtml = `
+      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.gamesPlayed ?? '—'}</div><div class="km-detail-stat-lbl">GP</div></div>
+      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.points ?? '—'}</div><div class="km-detail-stat-lbl">PTS</div></div>
+      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.goals ?? '—'}</div><div class="km-detail-stat-lbl">G</div></div>
+      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.assists ?? '—'}</div><div class="km-detail-stat-lbl">A</div></div>
+      <div class="km-detail-stat"><div class="km-detail-stat-val">${s.plusMinus !== undefined ? (s.plusMinus > 0 ? '+' : '') + s.plusMinus : '—'}</div><div class="km-detail-stat-lbl">+/-</div></div>`;
+  }
+  det.innerHTML = `<div class="km-detail-card">
+    <div class="km-detail-avatar">${initials(p.name)}</div>
+    <div class="km-detail-info">
+      <div class="km-detail-name">${p.name}</div>
+      <div class="km-detail-pos">${p.pos} · 2025–26 season</div>
+      <div class="km-detail-stats">${statsHtml || '<div style="color:#999;font-size:13px;">Stats unavailable</div>'}</div>
+    </div>
+  </div>`;
+}
+
+// Search — pulls live stats for named players
+const qMap = [
+  { match: ["points leader","leading scorer","most points"], fn: async () => {
+    await loadAllStats();
+    let best = null, bestPts = -1;
+    ROSTER.filter(p => p.pos !== 'G').forEach(p => {
+      const s = playerStats[p.id];
+      if (s && s.points > bestPts) { bestPts = s.points; best = p; }
+    });
+    return best ? { answer: `${best.name} — ${bestPts} points`, sub: `2025–26 season leader` } : null;
+  }},
+  ...ROSTER.map(p => ({
+    match: [p.name.toLowerCase(), p.name.split(' ')[1].toLowerCase()],
+    fn: async () => {
+      await loadAllStats();
+      const s = playerStats[p.id];
+      if (!s) return { answer: `${p.name} — stats unavailable`, sub: '' };
+      if (p.pos === 'G') return { answer: `${p.name} — ${s.wins}W · ${s.savePctg?.toFixed(3)} SV% · ${s.goalsAgainstAvg?.toFixed(2)} GAA`, sub: `${s.gamesPlayed} GP · ${s.shutouts} SO · 2025–26` };
+      return { answer: `${p.name} — ${s.points} PTS (${s.goals} G, ${s.assists} A) in ${s.gamesPlayed} GP`, sub: `${s.plusMinus >= 0 ? '+' : ''}${s.plusMinus} | 2025–26 regular season` };
+    }
+  })),
+  { match: ["stanley cup","cup","champions"], fn: async () => ({ answer: "VGK won the Stanley Cup in 2023", sub: "Defeated the Florida Panthers 4–1 · Marchessault won Conn Smythe" }) },
+  { match: ["goals record","single-season goals","most goals in a season"], fn: async () => ({ answer: "Jonathan Marchessault — 41 goals (2022–23)", sub: "VGK single-season goals record" }) },
+  { match: ["all-time wins","franchise wins"], fn: async () => ({ answer: "VGK all-time regular season wins: 335+", sub: "Since the 2017–18 inaugural season" }) },
+];
+
+async function runQuery() {
+  const raw = document.getElementById("q-input").value.trim();
+  if (!raw) return;
+  const q = raw.toLowerCase();
+  const area = document.getElementById("answer-area");
+  area.innerHTML = '<div class="km-loading">Looking that up...</div>';
+  let found = null;
+  for (const entry of qMap) {
+    if (entry.match.some(kw => q.includes(kw))) { found = entry; break; }
+  }
+  if (found) {
+    const result = await found.fn();
+    if (result) {
+      area.innerHTML = `<div class="km-answer-card"><div class="km-answer-label">KnightsMuse</div><div class="km-answer-main">${result.answer}</div><div class="km-answer-sub">${result.sub}</div></div>`;
+      return;
+    }
+  }
+  area.innerHTML = `<div class="km-answer-card"><div class="km-answer-label">KnightsMuse</div><div class="km-answer-main" style="font-size:18px;color:#999;">No match found</div><div class="km-answer-sub">Try a player name, "points leader", or "Stanley Cup"</div></div>`;
+}
+
+function setQ(text) {
+  document.getElementById("q-input").value = text;
+  runQuery();
+}
+
+const milestones = {
+  franchise: [
+    { icon: "🏆", title: "Stanley Cup champions", desc: "VGK defeated the Florida Panthers 4–1 in 2023", year: "2023" },
+    { icon: "⭐", title: "All-time points leader", desc: "Jonathan Marchessault — 519 pts across 7 seasons", year: "2017–present" },
+    { icon: "🥅", title: "All-time wins leader (G)", desc: "Marc-Andre Fleury — 190 wins in net for VGK", year: "2017–2021" },
+    { icon: "🎯", title: "Single-season points record", desc: "Jack Eichel — 91 points (2022–23)", year: "2022–23" },
+    { icon: "🎯", title: "Single-season goals record", desc: "Jonathan Marchessault — 41 goals (2022–23)", year: "2022–23" },
+    { icon: "📈", title: "Fastest expansion team to Cup", desc: "VGK won the Cup in just their 6th season", year: "2023" },
+  ],
+  season: [
+    { icon: "📊", title: "Most wins in a season", desc: "VGK — 51 wins (2022–23)", year: "2022–23" },
+    { icon: "📊", title: "Most points in a season", desc: "VGK — 111 points (2022–23)", year: "2022–23" },
+    { icon: "🥅", title: "Best GAA (single season)", desc: "Marc-Andre Fleury — 1.98 GAA (2020–21)", year: "2020–21" },
+    { icon: "🎯", title: "Most goals in a season", desc: "VGK — 263 goals (2022–23)", year: "2022–23" },
+  ],
+  playoff: [
+    { icon: "🏆", title: "Stanley Cup champions", desc: "VGK defeated the Florida Panthers 4–1", year: "2023" },
+    { icon: "⭐", title: "Conn Smythe Trophy", desc: "Marchessault — 13 G, 12 A in 2023 playoffs", year: "2023" },
+    { icon: "📈", title: "Most playoff wins (franchise)", desc: "VGK — 62 all-time playoff wins", year: "2017–present" },
+    { icon: "🔥", title: "Longest playoff win streak", desc: "8 consecutive wins (2023 playoffs)", year: "2023" },
+  ]
+};
+
+let currentRecTab = "franchise";
+function recTab(key) {
+  currentRecTab = key;
+  document.querySelectorAll(".km-tab").forEach((t, i) => {
+    t.classList.toggle("active", ["franchise","season","playoff"][i] === key);
+  });
+  renderRecords();
+}
+
+function renderRecords() {
+  const list = milestones[currentRecTab];
+  document.getElementById("records-list").innerHTML = `<div class="km-milestone-list">${list.map(m => `
+    <div class="km-milestone">
+      <div class="km-milestone-icon">${m.icon}</div>
+      <div class="km-milestone-text">
+        <div class="km-milestone-title">${m.title}</div>
+        <div class="km-milestone-desc">${m.desc}</div>
+      </div>
+      <div class="km-milestone-year">${m.year}</div>
+    </div>`).join('')}</div>`;
+}
+
+function showTab(name) {
+  ["search","players","records","feed"].forEach(t => {
+    document.getElementById("tab-" + t).style.display = t === name ? "" : "none";
+  });
+  document.querySelectorAll(".km-nav button").forEach((b, i) => {
+    b.classList.toggle("active", ["search","players","records","feed"][i] === name);
+  });
+  if (name === "players") renderPlayers();
+  if (name === "records") renderRecords();
+  if (name === "feed") loadTwitter();
+}
+
+let twitterLoaded = false;
+function loadTwitter() {
+  if (twitterLoaded) return;
+  twitterLoaded = true;
+  const s = document.createElement("script");
+  s.src = "https://platform.twitter.com/widgets.js";
+  s.async = true;
+  document.body.appendChild(s);
+}
+</script>
+</body>
+</html>
