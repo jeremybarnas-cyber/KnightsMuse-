@@ -65,6 +65,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .km-feed-label { font-size: 12px; font-weight: 500; color: #888; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
 .km-feed-wrap { background: #fff; border: 1px solid #e5e3dc; border-radius: 12px; overflow: hidden; padding: 16px; }
 .km-live-badge { display: inline-block; background: #B4975A; color: #fff; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; margin-left: 8px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.4px; }
+.km-logo-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; }
+.km-standings-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e5e3dc; }
+.km-standings-table th { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.4px; padding: 10px 12px; text-align: center; background: #f5f4f0; border-bottom: 1px solid #e5e3dc; }
+.km-standings-table th:first-child { text-align: left; }
+.km-standings-table td { font-size: 13px; color: #1a1a1a; padding: 10px 12px; text-align: center; border-bottom: 1px solid #f0ede6; }
+.km-standings-table td:first-child { text-align: left; font-weight: 500; }
+.km-standings-table tr:last-child td { border-bottom: none; }
+.km-standings-table tr.vgk-row td { background: rgba(180,151,90,0.08); font-weight: 600; }
+.km-standings-table tr:hover td { background: #faf9f6; }
+.km-standings-table tr.vgk-row:hover td { background: rgba(180,151,90,0.14); }
+.km-div-label { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 10px; }
 @media (max-width: 500px) {
   .km-detail-card { flex-direction: column; }
   .km-detail-avatar { width: 100%; height: 120px; }
@@ -75,11 +86,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <body>
 
 <div class="km-header">
-  <span class="km-logo-text">KnightsMuse</span>
+  <button class="km-logo-btn" onclick="goHome()" title="Home">
+    <img class="km-logo" src="logo.png" alt="KnightsMuse" onerror="this.style.display='none';this.nextElementSibling.style.display='inline';" />
+    <span class="km-logo-text" style="display:none;">KnightsMuse</span>
+  </button>
   <nav class="km-nav">
     <button class="active" onclick="showTab('search')">Search</button>
     <button onclick="showTab('players')">Players</button>
     <button onclick="showTab('records')">Records</button>
+    <button onclick="showTab('standings')">Standings</button>
     <button onclick="showTab('feed')">Feed</button>
   </nav>
 </div>
@@ -125,6 +140,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="km-feed-wrap">
       <a class="twitter-timeline" data-height="600" href="https://twitter.com/KnightsMuse">Tweets by KnightsMuse</a>
     </div>
+  </div>
+
+  <div id="tab-standings" style="display:none">
+    <div style="display:flex;align-items:center;margin-bottom:16px;">
+      <span class="km-section-title" style="margin:0;">2025–26 NHL standings</span>
+      <span class="km-live-badge">Live</span>
+    </div>
+    <div id="standings-content"><div class="km-loading">Loading standings...</div></div>
   </div>
 </div>
 
@@ -332,16 +355,72 @@ function renderRecords() {
     </div>`).join('')}</div>`;
 }
 
+function goHome() {
+  document.getElementById("q-input").value = "";
+  document.getElementById("answer-area").innerHTML = "";
+  showTab('search');
+}
+
+async function loadStandings() {
+  const el = document.getElementById("standings-content");
+  try {
+    const res = await fetch("https://api-web.nhle.com/v1/standings/now");
+    const data = await res.json();
+    const standings = data.standings;
+
+    const conferences = ["Western", "Eastern"];
+    let html = "";
+
+    for (const conf of conferences) {
+      html += `<div class="km-div-label">${conf} Conference</div>`;
+      const divs = [...new Set(standings.filter(t => t.conferenceName === conf).map(t => t.divisionName))];
+      for (const div of divs) {
+        const teams = standings.filter(t => t.divisionName === div).sort((a,b) => a.divisionSequence - b.divisionSequence);
+        html += `<div style="margin-bottom:20px;">
+          <div style="font-size:11px;color:#B4975A;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;">${div} Division</div>
+          <table class="km-standings-table">
+            <thead><tr>
+              <th>#</th><th style="text-align:left;">Team</th><th>GP</th><th>W</th><th>L</th><th>OTL</th><th>PTS</th><th>GF</th><th>GA</th>
+            </tr></thead>
+            <tbody>
+              ${teams.map((t, i) => {
+                const isVGK = t.teamAbbrev?.default === "VGK";
+                return `<tr class="${isVGK ? 'vgk-row' : ''}">
+                  <td>${i + 1}</td>
+                  <td>${isVGK ? '⚔️ ' : ''}${t.teamName?.default ?? t.teamAbbrev?.default}</td>
+                  <td>${t.gamesPlayed}</td>
+                  <td>${t.wins}</td>
+                  <td>${t.losses}</td>
+                  <td>${t.otLosses}</td>
+                  <td style="font-weight:600;color:${isVGK?'#8B6914':'#1a1a1a'};">${t.points}</td>
+                  <td>${t.goalFor}</td>
+                  <td>${t.goalAgainst}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>`;
+      }
+    }
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div class="km-loading">Could not load standings. Check your connection.</div>';
+  }
+}
+
+let standingsLoaded = false;
+
 function showTab(name) {
-  ["search","players","records","feed"].forEach(t => {
+  ["search","players","records","feed","standings"].forEach(t => {
     document.getElementById("tab-" + t).style.display = t === name ? "" : "none";
   });
   document.querySelectorAll(".km-nav button").forEach((b, i) => {
-    b.classList.toggle("active", ["search","players","records","feed"][i] === name);
+    b.classList.toggle("active", ["search","players","records","standings","feed"][i] === name);
   });
   if (name === "players") renderPlayers();
   if (name === "records") renderRecords();
   if (name === "feed") loadTwitter();
+  if (name === "standings" && !standingsLoaded) { standingsLoaded = true; loadStandings(); }
 }
 
 let twitterLoaded = false;
