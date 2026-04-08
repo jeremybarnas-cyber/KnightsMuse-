@@ -27,7 +27,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .km-search-wrap button { background: #B4975A; border: none; color: #000; font-size: 14px; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 700; }
 .km-search-wrap button:disabled { opacity: 0.5; cursor: not-allowed; }
 .km-content { padding: 20px; max-width: 1100px; margin: 0 auto; }
-.km-home-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+.km-home-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
 @media (max-width: 800px) { .km-home-grid { grid-template-columns: 1fr; } }
 .km-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
 .km-card-header { padding: 12px 16px; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; gap: 8px; }
@@ -133,16 +133,30 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div>
         <div class="km-card">
           <div class="km-card-header">
+            <span class="km-card-title">Knights facts</span>
+            <button onclick="newFact()" style="margin-left:auto;background:#B4975A22;border:1px solid #B4975A44;color:#B4975A;font-size:11px;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:inherit;">Next fact</button>
+          </div>
+          <div id="fun-fact-area" style="padding:20px;">
+            <div id="fun-fact-text" style="font-size:15px;color:#f0ede6;line-height:1.6;"></div>
+            <div id="fun-fact-sub" style="font-size:12px;color:#666;margin-top:8px;"></div>
+          </div>
+        </div>
+        <div class="km-card">
+          <div class="km-card-header">
+            <span class="km-card-title">@KnightsMuse_ on X</span>
+          </div>
+          <div style="padding:12px;">
+            <a class="twitter-timeline" data-height="360" data-theme="dark" href="https://twitter.com/KnightsMuse_">Tweets by KnightsMuse_</a>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="km-card">
+          <div class="km-card-header">
             <span class="km-card-title">Pacific Division</span>
             <span class="km-live-badge">Live</span>
           </div>
           <div id="home-standings"><div class="km-loading">Loading...</div></div>
-        </div>
-      </div>
-      <div>
-        <div style="font-size:12px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">@KnightsMuse_ on X</div>
-        <div class="km-feed-wrap">
-          <a class="twitter-timeline" data-height="480" data-theme="dark" href="https://twitter.com/KnightsMuse_">Tweets by KnightsMuse_</a>
         </div>
       </div>
     </div>
@@ -231,27 +245,33 @@ Franchise records:
 
 // ── Roster ───────────────────────────────────────────────────────
 const ROSTER = [
+  // Forwards
   { name: "Jack Eichel",       id: 8478403, pos: "C",  img: null },
   { name: "Mark Stone",        id: 8476925, pos: "RW", img: null },
+  { name: "Mitch Marner",      id: 8478483, pos: "RW", img: null },
   { name: "William Karlsson",  id: 8477946, pos: "C",  img: null },
   { name: "Ivan Barbashev",    id: 8478009, pos: "LW", img: null },
-  { name: "Mitch Marner",      id: 8478483, pos: "RW", img: null },
-  { name: "Pavel Dorofeyev",   id: 8482671, pos: "LW", img: null },
-  { name: "Thomas Hertl",      id: 8476882, pos: "C",  img: null },
-  { name: "Nicolas Roy",       id: 8480823, pos: "C",  img: null },
+  { name: "Tomas Hertl",       id: 8476882, pos: "C",  img: null },
+  { name: "Pavel Dorofeyev",   id: 8482671, pos: "RW", img: null },
+  { name: "Alexander Holtz",   id: 8482665, pos: "RW", img: null },
   { name: "Brett Howden",      id: 8480833, pos: "C",  img: null },
-  { name: "Tanner Pearson",    id: 8476871, pos: "LW", img: null },
-  { name: "Michael Amadio",    id: 8478507, pos: "C",  img: null },
   { name: "Keegan Kolesar",    id: 8480600, pos: "RW", img: null },
   { name: "Reilly Smith",      id: 8476879, pos: "RW", img: null },
+  { name: "Brandon Saad",      id: 8476392, pos: "LW", img: null },
+  { name: "Colton Sissons",    id: 8477511, pos: "C",  img: null },
+  { name: "Cole Smith",        id: 8479523, pos: "RW", img: null },
+  { name: "Nic Dowd",          id: 8475455, pos: "C",  img: null },
+  // Defense
   { name: "Shea Theodore",     id: 8478051, pos: "D",  img: null },
-  { name: "Alex Pietrangelo",  id: 8473419, pos: "D",  img: null },
   { name: "Rasmus Andersson",  id: 8479994, pos: "D",  img: null },
-  { name: "Zach Whitecloud",   id: 8481533, pos: "D",  img: null },
-  { name: "Brayden McNabb",    id: 8476368, pos: "D",  img: null },
   { name: "Noah Hanifin",      id: 8478476, pos: "D",  img: null },
-  { name: "Nicolas Hague",     id: 8480817, pos: "D",  img: null },
+  { name: "Brayden McNabb",    id: 8476368, pos: "D",  img: null },
+  { name: "Jeremy Lauzon",     id: 8480768, pos: "D",  img: null },
+  { name: "Kaedan Korczak",    id: 8482175, pos: "D",  img: null },
+  { name: "Ben Hutton",        id: 8477960, pos: "D",  img: null },
+  // Goalies
   { name: "Adin Hill",         id: 8478499, pos: "G",  img: null },
+  { name: "Carter Hart",       id: 8479973, pos: "G",  img: null },
   { name: "Akira Schmid",      id: 8482218, pos: "G",  img: null },
 ];
 
@@ -262,9 +282,14 @@ function initials(n) { return n.split(' ').map(w => w[0]).join(''); }
 
 async function fetchPlayerStats(id) {
   try {
+    // Try the stats summary endpoint first - faster
     const d = await nhlfetch(`https://api-web.nhle.com/v1/player/${id}/landing`);
     if (!d) return null;
-    return d.seasonTotals?.find(s => s.season === parseInt(SEASON) && s.gameTypeId === 2) || null;
+    const season = d.seasonTotals?.find(s => s.season === parseInt(SEASON) && s.gameTypeId === 2);
+    if (season) return season;
+    // fallback: check featuredStats
+    if (d.featuredStats?.regularSeason?.subSeason) return d.featuredStats.regularSeason.subSeason;
+    return null;
   } catch(e) { return null; }
 }
 
@@ -293,7 +318,10 @@ async function runQuery() {
   btn.disabled = true;
   area.innerHTML = `<div class="km-answer-card"><div class="km-answer-label"><span class="km-ai-badge">AI</span> KnightsMuse</div><div class="km-answer-main"><span class="typing-dots">Thinking</span></div></div>`;
 
-  await loadAllStats();
+  // Answer immediately with known context, fetch stats in parallel
+  const statsPromise = loadAllStats();
+  // Give stats 3 seconds max, then answer anyway
+  await Promise.race([statsPromise, new Promise(r => setTimeout(r, 3000))]);
   const statsContext = buildStatsContext();
   const answer = await askClaude(raw, statsContext);
 
@@ -475,8 +503,40 @@ function showTab(name) {
   if (name === "feed") loadTwitter();
 }
 
+
+// ── Fun Facts ────────────────────────────────────────────────────
+const FUN_FACTS = [
+  { text: "The Golden Knights became the first expansion team in NHL history to reach the Stanley Cup Final in their inaugural season (2017–18).", sub: "Historic debut season" },
+  { text: "Jack Eichel had a neck disc replacement surgery in November 2021 — a procedure that had never been done on an active NHL player before.", sub: "Jack Eichel" },
+  { text: "Marc-Andre Fleury posted a .927 SV% and 1.98 GAA in the 2020–21 season, winning the Vezina Trophy as the NHL's best goalie.", sub: "Marc-Andre Fleury · 2020–21" },
+  { text: "Jonathan Marchessault went undrafted, played in the ECHL, and went on to become the franchise's all-time points leader with 519 points.", sub: "Jonathan Marchessault" },
+  { text: "The Golden Knights went 6–0 in their first home playoff series in franchise history during the 2018 postseason.", sub: "2018 playoffs" },
+  { text: "William Karlsson scored 43 goals in 2017–18, his first season with VGK — up from just 6 goals the season before in Columbus.", sub: "William Karlsson · 2017–18" },
+  { text: "VGK's name 'Golden Knights' is the only NHL team named after a military unit — honoring the US Army Parachute Team based in Fort Bragg.", sub: "Team history" },
+  { text: "In 2023, Jonathan Marchessault became the first player in VGK history to win the Conn Smythe Trophy, posting 25 points in 22 playoff games.", sub: "Jonathan Marchessault · 2023" },
+  { text: "The Golden Knights won the Stanley Cup in 2023 in just their 6th season — the fastest any expansion team has ever won it.", sub: "2023 Stanley Cup" },
+  { text: "Adin Hill went 8–0 in the 2023 playoffs after taking over from Laurent Brossoit, posting a .942 SV% — one of the greatest goalie runs in playoff history.", sub: "Adin Hill · 2023 playoffs" },
+  { text: "Shea Theodore has been VGK's top defenseman since day one — he was claimed off waivers from Anaheim in the 2017 expansion draft.", sub: "Shea Theodore" },
+  { text: "VGK's T-Mobile Arena holds 17,500 fans and sits just off the Las Vegas Strip — the first major pro sports arena built there.", sub: "T-Mobile Arena" },
+  { text: "Mitch Marner won the Stanley Cup with VGK in 2025 after signing as a free agent, adding another chapter to one of hockey's most decorated careers.", sub: "Mitch Marner" },
+  { text: "The Golden Knights have made the playoffs in every season of their existence — the most consistent expansion franchise in NHL history.", sub: "Franchise consistency" },
+  { text: "Pavel Dorofeyev was a 6th round pick in 2019 who turned himself into a legitimate top-6 threat for VGK through relentless development.", sub: "Pavel Dorofeyev" },
+];
+
+let factIndex = Math.floor(Math.random() * FUN_FACTS.length);
+function showFact() {
+  const f = FUN_FACTS[factIndex];
+  document.getElementById("fun-fact-text").innerHTML = f.text;
+  document.getElementById("fun-fact-sub").textContent = f.sub;
+}
+function newFact() {
+  factIndex = (factIndex + 1) % FUN_FACTS.length;
+  showFact();
+}
+
 loadHomeStandings();
 loadTwitter();
+showFact();
 </script>
 </body>
 </html>
