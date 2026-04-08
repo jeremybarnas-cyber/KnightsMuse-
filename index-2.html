@@ -217,7 +217,7 @@ async function nhlfetch(url) {
 
 // ── Claude AI search ─────────────────────────────────────────────
 function smartAnswer(q_input) {
-  const q = q_input;
+  const q = q_input.toLowerCase();
   const s = playerStats;
   const fmt = (p) => {
     const st = s[p.id];
@@ -354,7 +354,6 @@ function smartAnswer(q_input) {
       ans: () => `VGK have historically been aggressive in free agency and trades. <strong>Jack Eichel</strong> ($10M/yr) and <strong>Mark Stone</strong> ($9.5M/yr) are the team's highest paid players.` },
   ];
 
-  const q = q_input.toLowerCase();
   for (const entry of qa) {
     if (entry.match.some(kw => q.includes(kw))) {
       const result = entry.ans();
