@@ -214,31 +214,151 @@ async function nhlfetch(url) {
 }
 
 // ── Claude AI search ─────────────────────────────────────────────
-async function askClaude(question, statsContext) {
-  const systemPrompt = `You are KnightsMuse, a Vegas Golden Knights stats assistant. Answer questions about VGK players and the team concisely and accurately. Use the live stats provided below when available. Format key numbers in bold using <strong> tags. Keep answers to 2-4 sentences max. Only answer questions about the Golden Knights.
+function smartAnswer(q) {
+  const s = playerStats;
+  const fmt = (p) => {
+    const st = s[p.id];
+    if (!st) return null;
+    if (p.pos === 'G') return `<strong>${p.name}</strong> has <strong>${st.wins} wins</strong>, a <strong>${st.savePctg?.toFixed(3)} SV%</strong> and <strong>${st.goalsAgainstAvg?.toFixed(2)} GAA</strong> in <strong>${st.gamesPlayed} GP</strong> this season.`;
+    return `<strong>${p.name}</strong> has <strong>${st.points} points</strong> (<strong>${st.goals} G</strong>, <strong>${st.assists} A</strong>) in <strong>${st.gamesPlayed} GP</strong> with a <strong>${st.plusMinus >= 0 ? '+' : ''}${st.plusMinus}</strong> rating this season.`;
+  };
 
-Current 2025-26 season roster stats:
-${statsContext}
+  const qa = [
+    // Points leader
+    { match: ['points leader','most points','leading scorer','who leads','top scorer'],
+      ans: () => { const sorted = ROSTER.filter(p=>p.pos!=='G').map(p=>({p,pts:(s[p.id]?.points||0)})).sort((a,b)=>b.pts-a.pts); const t=sorted[0]; return `<strong>${t.p.name}</strong> leads VGK with <strong>${t.pts} points</strong> this season. ${sorted[1]?`<strong>${sorted[1].p.name}</strong> is second with <strong>${sorted[1].pts} pts</strong>.`:''}`; }},
+    // Goals leader
+    { match: ['goals leader','most goals','who leads in goals','top goal'],
+      ans: () => { const sorted = ROSTER.filter(p=>p.pos!=='G').map(p=>({p,g:(s[p.id]?.goals||0)})).sort((a,b)=>b.g-a.g); const t=sorted[0]; return `<strong>${t.p.name}</strong> leads VGK with <strong>${t.g} goals</strong> this season.`; }},
+    // Assists leader
+    { match: ['assists leader','most assists','who leads in assists'],
+      ans: () => { const sorted = ROSTER.filter(p=>p.pos!=='G').map(p=>({p,a:(s[p.id]?.assists||0)})).sort((a,b)=>b.a-a.a); const t=sorted[0]; return `<strong>${t.p.name}</strong> leads VGK with <strong>${t.a} assists</strong> this season.`; }},
+    // Plus minus leader
+    { match: ['plus minus','best plus','plus/minus'],
+      ans: () => { const sorted = ROSTER.filter(p=>p.pos!=='G').map(p=>({p,pm:(s[p.id]?.plusMinus||0)})).sort((a,b)=>b.pm-a.pm); const t=sorted[0]; return `<strong>${t.p.name}</strong> leads VGK with a <strong>+${t.pm}</strong> rating this season.`; }},
+    // Stanley Cup
+    { match: ['stanley cup','cup win','won the cup','2023 cup','cup champion'],
+      ans: () => `VGK won the <strong>Stanley Cup in 2023</strong>, defeating the Florida Panthers <strong>4–1</strong> in the Final. <strong>Jonathan Marchessault</strong> won the Conn Smythe Trophy with <strong>13 goals and 12 assists</strong> in the playoffs.` },
+    // Marchessault
+    { match: ['marchessault'],
+      ans: () => `<strong>Jonathan Marchessault</strong> is VGK's all-time points leader with <strong>519 points</strong> and all-time goals leader with <strong>197 goals</strong>. He won the <strong>2023 Conn Smythe Trophy</strong> and was a cornerstone of the franchise for 7 seasons.` },
+    // Fleury
+    { match: ['fleury','flower','marc-andre'],
+      ans: () => `<strong>Marc-Andre Fleury</strong> is VGK's all-time wins leader with <strong>190 wins</strong>. He won the <strong>Vezina Trophy in 2021</strong> posting a remarkable <strong>1.98 GAA</strong> and <strong>.928 SV%</strong>. One of the most beloved players in franchise history.` },
+    // Eichel
+    { match: ['eichel','jack eichel'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Jack Eichel')) + ` Eichel holds the VGK single-season points record with <strong>91 points in 2022–23</strong>. He had a disc replacement surgery in 2021 — the first active NHL player to undergo the procedure.` },
+    // Stone
+    { match: ['mark stone','stone stats'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Mark Stone')) + ` Stone is the <strong>team captain</strong> and one of the best two-way forwards in the NHL.` },
+    // Marner
+    { match: ['marner','mitch marner'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Mitch Marner')) },
+    // Karlsson
+    { match: ['karlsson','william karlsson'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='William Karlsson')) + ` Karlsson famously scored <strong>43 goals in 2017–18</strong>, his first season with VGK — up from just 6 goals the year before.` },
+    // Dorofeyev
+    { match: ['dorofeyev','pavel'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Pavel Dorofeyev')) + ` Dorofeyev is VGK's <strong>goals leader</strong> this season and has emerged as one of the team's most dangerous forwards.` },
+    // Hertl
+    { match: ['hertl','tomas hertl'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Tomas Hertl')) },
+    // Barbashev
+    { match: ['barbashev','ivan barbashev'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Ivan Barbashev')) },
+    // Theodore
+    { match: ['theodore','shea theodore'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Shea Theodore')) + ` Theodore is VGK's <strong>top defenseman</strong> and was claimed from Anaheim in the 2017 expansion draft.` },
+    // Andersson
+    { match: ['andersson','rasmus andersson'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Rasmus Andersson')) },
+    // Hanifin
+    { match: ['hanifin','noah hanifin'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Noah Hanifin')) },
+    // McNabb
+    { match: ['mcnabb','brayden mcnabb'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Brayden McNabb')) },
+    // Lauzon
+    { match: ['lauzon','jeremy lauzon'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Jeremy Lauzon')) + ` Lauzon leads VGK in <strong>penalty minutes</strong> this season.` },
+    // Holtz
+    { match: ['holtz','alexander holtz'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Alexander Holtz')) },
+    // Howden
+    { match: ['howden','brett howden'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Brett Howden')) },
+    // Kolesar
+    { match: ['kolesar','keegan kolesar'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Keegan Kolesar')) + ` Kolesar is known as one of the team's <strong>toughest forwards</strong> and an energy player.` },
+    // Adin Hill
+    { match: ['adin hill','hill stats'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Adin Hill')) + ` Hill had one of the greatest goalie playoff runs in NHL history in <strong>2023</strong>, going <strong>8–0</strong> with a <strong>.942 SV%</strong>.` },
+    // Carter Hart
+    { match: ['carter hart','hart stats'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Carter Hart')) + ` Hart joined VGK after a difficult period in Philadelphia and has been solid in a backup/tandem role.` },
+    // Schmid
+    { match: ['schmid','akira schmid'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Akira Schmid')) },
+    // Saad
+    { match: ['saad','brandon saad'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Brandon Saad')) },
+    // Reilly Smith
+    { match: ['reilly smith'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Reilly Smith')) + ` Smith is a veteran presence who has been with VGK since the inaugural season.` },
+    // Sissons
+    { match: ['sissons','colton sissons'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Colton Sissons')) },
+    // Dowd
+    { match: ['nic dowd','dowd'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Nic Dowd')) },
+    // Korczak
+    { match: ['korczak','kaedan'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Kaedan Korczak')) },
+    // Hutton
+    { match: ['hutton','ben hutton'],
+      ans: () => fmt(ROSTER.find(p=>p.name==='Ben Hutton')) },
+    // Records
+    { match: ['single season points record','points record','most points in a season'],
+      ans: () => `The VGK single-season points record is held by <strong>Jack Eichel</strong> with <strong>91 points in 2022–23</strong>.` },
+    { match: ['single season goals record','goals record','most goals in a season'],
+      ans: () => `The VGK single-season goals record is held by <strong>Jonathan Marchessault</strong> with <strong>41 goals in 2022–23</strong>.` },
+    { match: ['all time points','franchise points leader','all-time points'],
+      ans: () => `<strong>Jonathan Marchessault</strong> is VGK's all-time points leader with <strong>519 points</strong> in 7 seasons.` },
+    { match: ['all time goals','franchise goals leader','all-time goals'],
+      ans: () => `<strong>Jonathan Marchessault</strong> is VGK's all-time goals leader with <strong>197 goals</strong>.` },
+    { match: ['all time wins','franchise wins','most wins'],
+      ans: () => `<strong>Marc-Andre Fleury</strong> is VGK's all-time wins leader in goal with <strong>190 wins</strong>.` },
+    // Season records
+    { match: ['best season','best record','most wins season'],
+      ans: () => `VGK's best regular season was <strong>2022–23</strong> with <strong>51 wins and 111 points</strong>.` },
+    // Playoffs
+    { match: ['playoff','playoffs','postseason'],
+      ans: () => `VGK have made the playoffs in <strong>every season</strong> of their existence. They won the <strong>Stanley Cup in 2023</strong> and reached the Final in their inaugural <strong>2017–18</strong> season.` },
+    // Arena
+    { match: ['arena','t-mobile','where do they play'],
+      ans: () => `VGK play at <strong>T-Mobile Arena</strong> in Las Vegas, which holds <strong>17,500 fans</strong> and sits just off the Las Vegas Strip.` },
+    // Coach
+    { match: ['coach','head coach','who coaches'],
+      ans: () => `VGK's head coach is <strong>Bruce Cassidy</strong>, who has led the team since 2022 and won the <strong>Stanley Cup with VGK in 2023</strong>.` },
+    // Expansion
+    { match: ['expansion','first season','inaugural','2017-18','2018 season'],
+      ans: () => `VGK entered the NHL in <strong>2017–18</strong> and immediately reached the <strong>Stanley Cup Final</strong> — the most successful expansion debut in NHL history. They went <strong>51–24–7</strong> that season.` },
+    // Pietrangelo
+    { match: ['pietrangelo','alex pietrangelo'],
+      ans: () => `<strong>Alex Pietrangelo</strong> is currently <strong>injured</strong> and not in the active lineup. He signed with VGK as a free agent in 2020 and has been their veteran defensive anchor when healthy.` },
+    // Cap / salary
+    { match: ['cap','salary','contract'],
+      ans: () => `VGK have historically been aggressive in free agency and trades. <strong>Jack Eichel</strong> ($10M/yr) and <strong>Mark Stone</strong> ($9.5M/yr) are the team's highest paid players.` },
+  ];
 
-Franchise records:
-- All-time points leader: Jonathan Marchessault (519 pts)
-- All-time goals leader: Jonathan Marchessault (197 goals)
-- All-time wins leader (G): Marc-Andre Fleury (190 wins)
-- Single-season points record: Jack Eichel, 91 pts (2022-23)
-- Single-season goals record: Jonathan Marchessault, 41 goals (2022-23)
-- Stanley Cup: Won in 2023, defeated Florida Panthers 4-1. Marchessault won Conn Smythe.`;
-
-  const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBjmVghFl3XMg6-3b62m_P7paF_NM4jLTA", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{
-        parts: [{ text: systemPrompt + "\n\nUser question: " + question }]
-      }]
-    })
-  });
-  const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't get an answer right now.";
+  const q = q_input.toLowerCase();
+  for (const entry of qa) {
+    if (entry.match.some(kw => q.includes(kw))) {
+      const result = entry.ans();
+      if (result) return result;
+    }
+  }
+  return null;
 }
 
 // ── Roster ───────────────────────────────────────────────────────
@@ -346,16 +466,18 @@ async function runQuery() {
   const area = document.getElementById("answer-area");
   const btn = document.getElementById("ask-btn");
   btn.disabled = true;
-  area.innerHTML = `<div class="km-answer-card"><div class="km-answer-label"><span class="km-ai-badge">AI</span> KnightsMuse</div><div class="km-answer-main"><span class="typing-dots">Thinking</span></div></div>`;
 
-  // Answer immediately with known context, fetch stats in parallel
-  const statsPromise = loadAllStats();
-  // Give stats 3 seconds max, then answer anyway
-  await Promise.race([statsPromise, new Promise(r => setTimeout(r, 3000))]);
-  const statsContext = buildStatsContext();
-  const answer = await askClaude(raw, statsContext);
+  await Promise.race([loadAllStats(), new Promise(r => setTimeout(r, 3000))]);
 
-  area.innerHTML = `<div class="km-answer-card"><div class="km-answer-label"><span class="km-ai-badge">AI</span> KnightsMuse</div><div class="km-answer-main">${answer}</div></div>`;
+  // Use q_input as the variable name expected by smartAnswer
+  const q_input = raw;
+  const answer = smartAnswer(q_input);
+
+  if (answer) {
+    area.innerHTML = `<div class="km-answer-card"><div class="km-answer-label"><span class="km-ai-badge">KM</span> KnightsMuse</div><div class="km-answer-main">${answer}</div></div>`;
+  } else {
+    area.innerHTML = `<div class="km-answer-card"><div class="km-answer-label"><span class="km-ai-badge">KM</span> KnightsMuse</div><div class="km-answer-main" style="font-size:16px;color:#888;">Try asking about a player name, stats, records, the Stanley Cup, or the arena.</div></div>`;
+  }
   btn.disabled = false;
 }
 
