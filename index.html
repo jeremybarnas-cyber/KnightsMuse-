@@ -25,6 +25,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .km-search-wrap input::placeholder { color: #555; }
 .km-search-wrap input:focus { border-color: #B4975A; }
 .km-search-wrap button { background: #B4975A; border: none; color: #000; font-size: 14px; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-family: inherit; font-weight: 700; }
+.km-search-wrap button:disabled { opacity: 0.5; cursor: not-allowed; }
 .km-content { padding: 20px; max-width: 1100px; margin: 0 auto; }
 .km-home-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
 @media (max-width: 800px) { .km-home-grid { grid-template-columns: 1fr; } }
@@ -32,9 +33,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .km-card-header { padding: 12px 16px; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; gap: 8px; }
 .km-card-title { font-size: 13px; font-weight: 600; color: #B4975A; text-transform: uppercase; letter-spacing: 0.5px; }
 .km-answer-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-.km-answer-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
-.km-answer-main { font-size: 24px; font-weight: 700; color: #f0ede6; line-height: 1.2; margin-bottom: 4px; }
-.km-answer-sub { font-size: 14px; color: #888; }
+.km-answer-label { font-size: 11px; color: #B4975A; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.km-ai-badge { background: #B4975A22; border: 1px solid #B4975A44; color: #B4975A; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
+.km-answer-main { font-size: 16px; color: #f0ede6; line-height: 1.7; }
+.km-answer-main strong { color: #B4975A; font-weight: 700; }
 .km-suggest { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .km-suggest button { background: #1a1a1a; border: 1px solid #2a2a2a; color: #888; font-size: 13px; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-family: inherit; }
 .km-suggest button:hover { border-color: #B4975A; color: #B4975A; }
@@ -85,6 +87,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .km-live-badge { display: inline-block; background: #B4975A; color: #000; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-left: 8px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.4px; }
 .km-loading { text-align: center; padding: 30px; color: #444; font-size: 14px; }
 .km-pos-group { font-size: 11px; font-weight: 700; color: #B4975A; text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 8px; }
+.typing-dots::after { content: ''; animation: dots 1.2s infinite; }
+@keyframes dots { 0%,20%{content:'.'} 40%{content:'..'} 60%,100%{content:'...'} }
 @media (max-width: 500px) {
   .km-detail-card { flex-direction: column; }
   .km-detail-avatar, .km-detail-photo { width: 100%; height: 130px; }
@@ -111,7 +115,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <div class="km-search-bar">
   <div class="km-search-wrap">
     <input id="q-input" type="text" placeholder="Ask anything about the Golden Knights..." onkeydown="if(event.key==='Enter')runQuery()" />
-    <button onclick="runQuery()">Ask</button>
+    <button id="ask-btn" onclick="runQuery()">Ask</button>
   </div>
 </div>
 
@@ -119,10 +123,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   <div id="tab-search">
     <div class="km-suggest">
-      <button onclick="setQ('Jack Eichel stats')">Eichel stats</button>
-      <button onclick="setQ('Mark Stone stats')">Stone stats</button>
-      <button onclick="setQ('points leader')">Points leader</button>
-      <button onclick="setQ('Stanley Cup')">Stanley Cup</button>
+      <button onclick="setQ('How many points does Jack Eichel have this season?')">Eichel stats</button>
+      <button onclick="setQ('How many points does Mark Stone have this season?')">Stone stats</button>
+      <button onclick="setQ('Who leads the Golden Knights in points this season?')">Points leader</button>
+      <button onclick="setQ('Tell me about the Golden Knights 2023 Stanley Cup win')">Stanley Cup</button>
     </div>
     <div id="answer-area" style="margin-bottom:16px;"></div>
     <div class="km-home-grid">
@@ -181,30 +185,74 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 <script>
 const SEASON = "20252026";
+const PROXY = "https://corsproxy.io/?url=";
 
+// ── NHL API helpers ──────────────────────────────────────────────
+async function nhlfetch(url) {
+  try {
+    const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (r.ok) return await r.json();
+  } catch(e) {}
+  try {
+    const r = await fetch(PROXY + encodeURIComponent(url));
+    if (r.ok) return await r.json();
+  } catch(e) {}
+  return null;
+}
+
+// ── Claude AI search ─────────────────────────────────────────────
+async function askClaude(question, statsContext) {
+  const systemPrompt = `You are KnightsMuse, a Vegas Golden Knights stats assistant. Answer questions about VGK players and the team concisely and accurately. Use the live stats provided below when available. Format key numbers in bold using <strong> tags. Keep answers to 2-4 sentences max. Only answer questions about the Golden Knights.
+
+Current 2025-26 season roster stats:
+${statsContext}
+
+Franchise records:
+- All-time points leader: Jonathan Marchessault (519 pts)
+- All-time goals leader: Jonathan Marchessault (197 goals)
+- All-time wins leader (G): Marc-Andre Fleury (190 wins)
+- Single-season points record: Jack Eichel, 91 pts (2022-23)
+- Single-season goals record: Jonathan Marchessault, 41 goals (2022-23)
+- Stanley Cup: Won in 2023, defeated Florida Panthers 4-1. Marchessault won Conn Smythe.`;
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: question }]
+    })
+  });
+  const data = await response.json();
+  return data.content?.[0]?.text || "Sorry, I couldn't get an answer right now.";
+}
+
+// ── Roster ───────────────────────────────────────────────────────
 const ROSTER = [
-  { name: "Jack Eichel",        id: 8478403, pos: "C",  img: null },
-  { name: "Mark Stone",         id: 8476925, pos: "RW", img: null },
-  { name: "William Karlsson",   id: 8477946, pos: "C",  img: null },
-  { name: "Ivan Barbashev",     id: 8478009, pos: "LW", img: null },
-  { name: "Mitch Marner",       id: 8478483, pos: "RW", img: null },
-  { name: "Pavel Dorofeyev",    id: 8482671, pos: "LW", img: null },
-  { name: "Thomas Hertl",       id: 8476882, pos: "C",  img: null },
-  { name: "Nicolas Roy",        id: 8480823, pos: "C",  img: null },
-  { name: "Brett Howden",       id: 8480833, pos: "C",  img: null },
-  { name: "Tanner Pearson",     id: 8476871, pos: "LW", img: null },
-  { name: "Michael Amadio",     id: 8478507, pos: "C",  img: null },
-  { name: "Keegan Kolesar",     id: 8480600, pos: "RW", img: null },
-  { name: "Reilly Smith",       id: 8476879, pos: "RW", img: null },
-  { name: "Shea Theodore",      id: 8478051, pos: "D",  img: null },
-  { name: "Alex Pietrangelo",   id: 8473419, pos: "D",  img: null },
-  { name: "Rasmus Andersson",   id: 8479994, pos: "D",  img: null },
-  { name: "Zach Whitecloud",    id: 8481533, pos: "D",  img: null },
-  { name: "Brayden McNabb",     id: 8476368, pos: "D",  img: null },
-  { name: "Noah Hanifin",       id: 8478476, pos: "D",  img: null },
-  { name: "Nicolas Hague",      id: 8480817, pos: "D",  img: null },
-  { name: "Adin Hill",          id: 8478499, pos: "G",  img: null },
-  { name: "Akira Schmid",       id: 8482218, pos: "G",  img: null },
+  { name: "Jack Eichel",       id: 8478403, pos: "C",  img: null },
+  { name: "Mark Stone",        id: 8476925, pos: "RW", img: null },
+  { name: "William Karlsson",  id: 8477946, pos: "C",  img: null },
+  { name: "Ivan Barbashev",    id: 8478009, pos: "LW", img: null },
+  { name: "Mitch Marner",      id: 8478483, pos: "RW", img: null },
+  { name: "Pavel Dorofeyev",   id: 8482671, pos: "LW", img: null },
+  { name: "Thomas Hertl",      id: 8476882, pos: "C",  img: null },
+  { name: "Nicolas Roy",       id: 8480823, pos: "C",  img: null },
+  { name: "Brett Howden",      id: 8480833, pos: "C",  img: null },
+  { name: "Tanner Pearson",    id: 8476871, pos: "LW", img: null },
+  { name: "Michael Amadio",    id: 8478507, pos: "C",  img: null },
+  { name: "Keegan Kolesar",    id: 8480600, pos: "RW", img: null },
+  { name: "Reilly Smith",      id: 8476879, pos: "RW", img: null },
+  { name: "Shea Theodore",     id: 8478051, pos: "D",  img: null },
+  { name: "Alex Pietrangelo",  id: 8473419, pos: "D",  img: null },
+  { name: "Rasmus Andersson",  id: 8479994, pos: "D",  img: null },
+  { name: "Zach Whitecloud",   id: 8481533, pos: "D",  img: null },
+  { name: "Brayden McNabb",    id: 8476368, pos: "D",  img: null },
+  { name: "Noah Hanifin",      id: 8478476, pos: "D",  img: null },
+  { name: "Nicolas Hague",     id: 8480817, pos: "D",  img: null },
+  { name: "Adin Hill",         id: 8478499, pos: "G",  img: null },
+  { name: "Akira Schmid",      id: 8482218, pos: "G",  img: null },
 ];
 
 let playerStats = {};
@@ -214,8 +262,8 @@ function initials(n) { return n.split(' ').map(w => w[0]).join(''); }
 
 async function fetchPlayerStats(id) {
   try {
-    const r = await fetch(`https://api-web.nhle.com/v1/player/${id}/landing`);
-    const d = await r.json();
+    const d = await nhlfetch(`https://api-web.nhle.com/v1/player/${id}/landing`);
+    if (!d) return null;
     return d.seasonTotals?.find(s => s.season === parseInt(SEASON) && s.gameTypeId === 2) || null;
   } catch(e) { return null; }
 }
@@ -227,6 +275,35 @@ async function loadAllStats() {
   statsLoaded = true;
 }
 
+function buildStatsContext() {
+  return ROSTER.map(p => {
+    const s = playerStats[p.id];
+    if (!s) return `${p.name} (${p.pos}): stats unavailable`;
+    if (p.pos === 'G') return `${p.name} (G): ${s.gamesPlayed}GP, ${s.wins}W, ${s.savePctg?.toFixed(3)} SV%, ${s.goalsAgainstAvg?.toFixed(2)} GAA, ${s.shutouts}SO`;
+    return `${p.name} (${p.pos}): ${s.gamesPlayed}GP, ${s.goals}G, ${s.assists}A, ${s.points}PTS, ${s.plusMinus >= 0 ? '+' : ''}${s.plusMinus}`;
+  }).join('\n');
+}
+
+// ── Search / AI ──────────────────────────────────────────────────
+async function runQuery() {
+  const raw = document.getElementById("q-input").value.trim();
+  if (!raw) return;
+  const area = document.getElementById("answer-area");
+  const btn = document.getElementById("ask-btn");
+  btn.disabled = true;
+  area.innerHTML = `<div class="km-answer-card"><div class="km-answer-label"><span class="km-ai-badge">AI</span> KnightsMuse</div><div class="km-answer-main"><span class="typing-dots">Thinking</span></div></div>`;
+
+  await loadAllStats();
+  const statsContext = buildStatsContext();
+  const answer = await askClaude(raw, statsContext);
+
+  area.innerHTML = `<div class="km-answer-card"><div class="km-answer-label"><span class="km-ai-badge">AI</span> KnightsMuse</div><div class="km-answer-main">${answer}</div></div>`;
+  btn.disabled = false;
+}
+
+function setQ(t) { document.getElementById("q-input").value = t; runQuery(); }
+
+// ── Players ──────────────────────────────────────────────────────
 function avatarEl(p, isDetail) {
   if (p.img) return `<img class="${isDetail ? 'km-detail-photo' : 'km-player-photo'}" src="${p.img}" alt="${p.name}" />`;
   return `<div class="${isDetail ? 'km-detail-avatar' : 'km-player-avatar'}">${initials(p.name)}</div>`;
@@ -253,15 +330,19 @@ async function renderPlayers() {
       const s = playerStats[p.id];
       let sr = '';
       if (p.pos === 'G') {
-        sr = s ? `<div class="km-stat-row"><span class="km-stat-label">W</span><span class="km-stat-val">${s.wins??'—'}</span></div>
-          <div class="km-stat-row"><span class="km-stat-label">SV%</span><span class="km-stat-val">${s.savePctg?s.savePctg.toFixed(3):'—'}</span></div>
-          <div class="km-stat-row"><span class="km-stat-label">GAA</span><span class="km-stat-val">${s.goalsAgainstAvg?s.goalsAgainstAvg.toFixed(2):'—'}</span></div>` : '<div class="km-stat-row"><span class="km-stat-label">Stats</span><span class="km-stat-val">—</span></div>';
+        sr = s
+          ? `<div class="km-stat-row"><span class="km-stat-label">W</span><span class="km-stat-val">${s.wins ?? '—'}</span></div>
+             <div class="km-stat-row"><span class="km-stat-label">SV%</span><span class="km-stat-val">${s.savePctg ? s.savePctg.toFixed(3) : '—'}</span></div>
+             <div class="km-stat-row"><span class="km-stat-label">GAA</span><span class="km-stat-val">${s.goalsAgainstAvg ? s.goalsAgainstAvg.toFixed(2) : '—'}</span></div>`
+          : `<div class="km-stat-row"><span class="km-stat-label">Stats</span><span class="km-stat-val">—</span></div>`;
       } else {
-        sr = s ? `<div class="km-stat-row"><span class="km-stat-label">PTS</span><span class="km-stat-val">${s.points??'—'}</span></div>
-          <div class="km-stat-row"><span class="km-stat-label">G</span><span class="km-stat-val">${s.goals??'—'}</span></div>
-          <div class="km-stat-row"><span class="km-stat-label">A</span><span class="km-stat-val">${s.assists??'—'}</span></div>` : '<div class="km-stat-row"><span class="km-stat-label">PTS</span><span class="km-stat-val">—</span></div>';
+        sr = s
+          ? `<div class="km-stat-row"><span class="km-stat-label">PTS</span><span class="km-stat-val">${s.points ?? '—'}</span></div>
+             <div class="km-stat-row"><span class="km-stat-label">G</span><span class="km-stat-val">${s.goals ?? '—'}</span></div>
+             <div class="km-stat-row"><span class="km-stat-label">A</span><span class="km-stat-val">${s.assists ?? '—'}</span></div>`
+          : `<div class="km-stat-row"><span class="km-stat-label">PTS</span><span class="km-stat-val">—</span></div>`;
       }
-      html += `<div class="km-player-card" id="pc-${idx}" onclick="selectPlayer(${idx})">${avatarEl(p,false)}<div class="km-player-info"><div class="km-player-name">${p.name}</div><div class="km-player-pos">${p.pos}</div>${sr}</div></div>`;
+      html += `<div class="km-player-card" id="pc-${idx}" onclick="selectPlayer(${idx})">${avatarEl(p, false)}<div class="km-player-info"><div class="km-player-name">${p.name}</div><div class="km-player-pos">${p.pos}</div>${sr}</div></div>`;
     }
     html += '</div>';
   }
@@ -273,28 +354,30 @@ function selectPlayer(i) {
   const s = playerStats[p.id];
   document.querySelectorAll('.km-player-card').forEach(c => c.classList.remove('active'));
   const card = document.getElementById('pc-' + i);
-  if (card) { card.classList.add('active'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  if (card) { card.classList.add('active'); card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
   let sh = '';
   if (p.pos === 'G' && s) {
-    sh = sc(s.gamesPlayed??'—','GP')+sc(s.wins??'—','W')+sc(s.savePctg?s.savePctg.toFixed(3):'—','SV%')+sc(s.goalsAgainstAvg?s.goalsAgainstAvg.toFixed(2):'—','GAA')+sc(s.shutouts??'—','SO');
+    sh = sc(s.gamesPlayed ?? '—', 'GP') + sc(s.wins ?? '—', 'W') + sc(s.savePctg ? s.savePctg.toFixed(3) : '—', 'SV%') + sc(s.goalsAgainstAvg ? s.goalsAgainstAvg.toFixed(2) : '—', 'GAA') + sc(s.shutouts ?? '—', 'SO');
   } else if (s) {
-    sh = sc(s.gamesPlayed??'—','GP')+sc(s.points??'—','PTS')+sc(s.goals??'—','G')+sc(s.assists??'—','A')+sc(s.plusMinus!==undefined?(s.plusMinus>0?'+':'')+s.plusMinus:'—','+/-')+sc(s.pim??'—','PIM');
+    sh = sc(s.gamesPlayed ?? '—', 'GP') + sc(s.points ?? '—', 'PTS') + sc(s.goals ?? '—', 'G') + sc(s.assists ?? '—', 'A') + sc(s.plusMinus !== undefined ? (s.plusMinus > 0 ? '+' : '') + s.plusMinus : '—', '+/-') + sc(s.pim ?? '—', 'PIM');
   }
-  document.getElementById('player-detail').innerHTML = `<div class="km-detail-card">${avatarEl(p,true)}<div class="km-detail-info"><div class="km-detail-name">${p.name}</div><div class="km-detail-pos">${p.pos} · 2025–26</div><div class="km-detail-stats">${sh||'<div style="color:#444;font-size:13px;">Stats unavailable</div>'}</div></div></div>`;
+  document.getElementById('player-detail').innerHTML = `<div class="km-detail-card">${avatarEl(p, true)}<div class="km-detail-info"><div class="km-detail-name">${p.name}</div><div class="km-detail-pos">${p.pos} · 2025–26</div><div class="km-detail-stats">${sh || '<div style="color:#444;font-size:13px;">Stats unavailable</div>'}</div></div></div>`;
 }
 
+// ── Standings ────────────────────────────────────────────────────
 async function fetchStandings() {
-  const r = await fetch("https://api-web.nhle.com/v1/standings/now");
-  return (await r.json()).standings;
+  const d = await nhlfetch("https://api-web.nhle.com/v1/standings/now");
+  if (!d) throw new Error("no data");
+  return d.standings;
 }
 
 function buildTable(teams, compact) {
   return `<table class="km-standings-table"><thead><tr>
-    <th>#</th><th style="text-align:left;">Team</th><th>GP</th><th>W</th><th>L</th><th>OTL</th><th>PTS</th>${!compact?'<th>GF</th><th>GA</th><th>DIFF</th>':''}
-  </tr></thead><tbody>${teams.map((t,i)=>{
-    const vgk = t.teamAbbrev?.default==="VGK";
+    <th>#</th><th style="text-align:left;">Team</th><th>GP</th><th>W</th><th>L</th><th>OTL</th><th>PTS</th>${!compact ? '<th>GF</th><th>GA</th><th>DIFF</th>' : ''}
+  </tr></thead><tbody>${teams.map((t, i) => {
+    const vgk = t.teamAbbrev?.default === "VGK";
     const diff = t.goalFor - t.goalAgainst;
-    return `<tr class="${vgk?'vgk-row':''}"><td>${i+1}</td><td>${vgk?'⚔️ ':''}${t.teamName?.default??t.teamAbbrev?.default}</td><td>${t.gamesPlayed}</td><td>${t.wins}</td><td>${t.losses}</td><td>${t.otLosses}</td><td>${t.points}</td>${!compact?`<td>${t.goalFor}</td><td>${t.goalAgainst}</td><td>${diff>0?'+':''}${diff}</td>`:''}</tr>`;
+    return `<tr class="${vgk ? 'vgk-row' : ''}"><td>${i + 1}</td><td>${vgk ? '⚔️ ' : ''}${t.teamName?.default ?? t.teamAbbrev?.default}</td><td>${t.gamesPlayed}</td><td>${t.wins}</td><td>${t.losses}</td><td>${t.otLosses}</td><td>${t.points}</td>${!compact ? `<td>${t.goalFor}</td><td>${t.goalAgainst}</td><td>${diff > 0 ? '+' : ''}${diff}</td>` : ''}</tr>`;
   }).join('')}</tbody></table>`;
 }
 
@@ -302,9 +385,9 @@ async function loadHomeStandings() {
   const el = document.getElementById("home-standings");
   try {
     const s = await fetchStandings();
-    const pac = s.filter(t=>t.divisionName==="Pacific").sort((a,b)=>a.divisionSequence-b.divisionSequence);
+    const pac = s.filter(t => t.divisionName === "Pacific").sort((a, b) => a.divisionSequence - b.divisionSequence);
     el.innerHTML = buildTable(pac, true);
-  } catch(e) { el.innerHTML='<div class="km-loading">Could not load.</div>'; }
+  } catch(e) { el.innerHTML = '<div class="km-loading">Could not load standings.</div>'; }
 }
 
 let fullStandingsLoaded = false;
@@ -313,117 +396,83 @@ async function loadFullStandings() {
   try {
     const standings = await fetchStandings();
     let html = "";
-    for (const conf of ["Western","Eastern"]) {
+    for (const conf of ["Western", "Eastern"]) {
       html += `<div style="margin-bottom:28px;"><div style="font-size:14px;font-weight:700;color:#f0ede6;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;">${conf} Conference</div>`;
-      const divs = [...new Set(standings.filter(t=>t.conferenceName===conf).map(t=>t.divisionName))];
+      const divs = [...new Set(standings.filter(t => t.conferenceName === conf).map(t => t.divisionName))];
       for (const div of divs) {
-        const teams = standings.filter(t=>t.divisionName===div).sort((a,b)=>a.divisionSequence-b.divisionSequence);
-        html += `<div class="km-card" style="margin-bottom:14px;"><div class="km-div-label">${div} Division</div>${buildTable(teams,false)}</div>`;
+        const teams = standings.filter(t => t.divisionName === div).sort((a, b) => a.divisionSequence - b.divisionSequence);
+        html += `<div class="km-card" style="margin-bottom:14px;"><div class="km-div-label">${div} Division</div>${buildTable(teams, false)}</div>`;
       }
       html += '</div>';
     }
     el.innerHTML = html;
     fullStandingsLoaded = true;
-  } catch(e) { el.innerHTML='<div class="km-loading">Could not load standings.</div>'; }
+  } catch(e) { el.innerHTML = '<div class="km-loading">Could not load standings.</div>'; }
 }
 
-const qMap = [
-  { match:["points leader","leading scorer","most points"], fn: async()=>{
-    await loadAllStats();
-    let best=null,bestPts=-1;
-    ROSTER.filter(p=>p.pos!=='G').forEach(p=>{const s=playerStats[p.id];if(s&&(s.points??0)>bestPts){bestPts=s.points;best=p;}});
-    return best?{answer:`${best.name} — ${bestPts} points`,sub:`2025–26 points leader`}:null;
-  }},
-  ...ROSTER.map(p=>({
-    match:[p.name.toLowerCase(),p.name.split(' ').slice(-1)[0].toLowerCase()],
-    fn: async()=>{
-      await loadAllStats();
-      const s=playerStats[p.id];
-      if(!s) return {answer:`${p.name} — stats unavailable`,sub:'Could not load from NHL API'};
-      if(p.pos==='G') return {answer:`${p.name} — ${s.wins}W · ${s.savePctg?.toFixed(3)} SV% · ${s.goalsAgainstAvg?.toFixed(2)} GAA`,sub:`${s.gamesPlayed} GP · ${s.shutouts} SO · 2025–26`};
-      return {answer:`${p.name} — ${s.points} PTS (${s.goals} G, ${s.assists} A) in ${s.gamesPlayed} GP`,sub:`${s.plusMinus>=0?'+':''}${s.plusMinus} | 2025–26`};
-    }
-  })),
-  { match:["stanley cup","cup","champions"], fn:async()=>({answer:"VGK won the Stanley Cup in 2023",sub:"Defeated the Florida Panthers 4–1 · Marchessault won Conn Smythe"}) },
-  { match:["goals record","single-season goals"], fn:async()=>({answer:"Jonathan Marchessault — 41 goals (2022–23)",sub:"VGK single-season goals record"}) },
-  { match:["all-time wins","franchise wins"], fn:async()=>({answer:"VGK all-time regular season wins: 335+",sub:"Since the 2017–18 inaugural season"}) },
-];
-
-async function runQuery() {
-  const raw=document.getElementById("q-input").value.trim();
-  if(!raw) return;
-  const q=raw.toLowerCase();
-  const area=document.getElementById("answer-area");
-  area.innerHTML='<div class="km-loading">Looking that up...</div>';
-  let found=null;
-  for(const e of qMap){if(e.match.some(kw=>q.includes(kw))){found=e;break;}}
-  if(found){const r=await found.fn();if(r){area.innerHTML=`<div class="km-answer-card"><div class="km-answer-label">KnightsMuse</div><div class="km-answer-main">${r.answer}</div><div class="km-answer-sub">${r.sub}</div></div>`;return;}}
-  area.innerHTML=`<div class="km-answer-card"><div class="km-answer-label">KnightsMuse</div><div class="km-answer-main" style="font-size:18px;color:#444;">No match found</div><div class="km-answer-sub">Try a player name, "points leader", or "Stanley Cup"</div></div>`;
-}
-
-function setQ(t){document.getElementById("q-input").value=t;runQuery();}
-
-const milestones={
-  franchise:[
-    {icon:"🏆",title:"Stanley Cup champions",desc:"VGK defeated the Florida Panthers 4–1 in 2023",year:"2023"},
-    {icon:"⭐",title:"All-time points leader",desc:"Jonathan Marchessault — 519 pts across 7 seasons",year:"2017–present"},
-    {icon:"🥅",title:"All-time wins leader (G)",desc:"Marc-Andre Fleury — 190 wins in net for VGK",year:"2017–2021"},
-    {icon:"🎯",title:"Single-season points record",desc:"Jack Eichel — 91 points (2022–23)",year:"2022–23"},
-    {icon:"🎯",title:"Single-season goals record",desc:"Jonathan Marchessault — 41 goals (2022–23)",year:"2022–23"},
-    {icon:"📈",title:"Fastest expansion team to Cup",desc:"VGK won the Cup in just their 6th season",year:"2023"},
+// ── Records ──────────────────────────────────────────────────────
+const milestones = {
+  franchise: [
+    { icon: "🏆", title: "Stanley Cup champions", desc: "VGK defeated the Florida Panthers 4–1 in 2023", year: "2023" },
+    { icon: "⭐", title: "All-time points leader", desc: "Jonathan Marchessault — 519 pts across 7 seasons", year: "2017–present" },
+    { icon: "🥅", title: "All-time wins leader (G)", desc: "Marc-Andre Fleury — 190 wins in net for VGK", year: "2017–2021" },
+    { icon: "🎯", title: "Single-season points record", desc: "Jack Eichel — 91 points (2022–23)", year: "2022–23" },
+    { icon: "🎯", title: "Single-season goals record", desc: "Jonathan Marchessault — 41 goals (2022–23)", year: "2022–23" },
+    { icon: "📈", title: "Fastest expansion team to Cup", desc: "VGK won the Cup in just their 6th season", year: "2023" },
   ],
-  season:[
-    {icon:"📊",title:"Most wins in a season",desc:"VGK — 51 wins (2022–23)",year:"2022–23"},
-    {icon:"📊",title:"Most points in a season",desc:"VGK — 111 points (2022–23)",year:"2022–23"},
-    {icon:"🥅",title:"Best GAA (single season)",desc:"Marc-Andre Fleury — 1.98 GAA (2020–21)",year:"2020–21"},
-    {icon:"🎯",title:"Most goals in a season",desc:"VGK — 263 goals (2022–23)",year:"2022–23"},
+  season: [
+    { icon: "📊", title: "Most wins in a season", desc: "VGK — 51 wins (2022–23)", year: "2022–23" },
+    { icon: "📊", title: "Most points in a season", desc: "VGK — 111 points (2022–23)", year: "2022–23" },
+    { icon: "🥅", title: "Best GAA (single season)", desc: "Marc-Andre Fleury — 1.98 GAA (2020–21)", year: "2020–21" },
+    { icon: "🎯", title: "Most goals in a season", desc: "VGK — 263 goals (2022–23)", year: "2022–23" },
   ],
-  playoff:[
-    {icon:"🏆",title:"Stanley Cup champions",desc:"VGK defeated the Florida Panthers 4–1",year:"2023"},
-    {icon:"⭐",title:"Conn Smythe Trophy",desc:"Marchessault — 13 G, 12 A in 2023 playoffs",year:"2023"},
-    {icon:"📈",title:"Most playoff wins (franchise)",desc:"VGK — 62 all-time playoff wins",year:"2017–present"},
-    {icon:"🔥",title:"Longest playoff win streak",desc:"8 consecutive wins (2023 playoffs)",year:"2023"},
+  playoff: [
+    { icon: "🏆", title: "Stanley Cup champions", desc: "VGK defeated the Florida Panthers 4–1", year: "2023" },
+    { icon: "⭐", title: "Conn Smythe Trophy", desc: "Marchessault — 13 G, 12 A in 2023 playoffs", year: "2023" },
+    { icon: "📈", title: "Most playoff wins (franchise)", desc: "VGK — 62 all-time playoff wins", year: "2017–present" },
+    { icon: "🔥", title: "Longest playoff win streak", desc: "8 consecutive wins (2023 playoffs)", year: "2023" },
   ]
 };
 
-let currentRecTab="franchise";
-function recTab(key){
-  currentRecTab=key;
-  document.querySelectorAll(".km-tab").forEach((t,i)=>{t.classList.toggle("active",["franchise","season","playoff"][i]===key);});
+let currentRecTab = "franchise";
+function recTab(key) {
+  currentRecTab = key;
+  document.querySelectorAll(".km-tab").forEach((t, i) => { t.classList.toggle("active", ["franchise", "season", "playoff"][i] === key); });
   renderRecords();
 }
-function renderRecords(){
-  document.getElementById("records-list").innerHTML=`<div class="km-milestone-list">${milestones[currentRecTab].map(m=>`<div class="km-milestone"><div class="km-milestone-icon">${m.icon}</div><div class="km-milestone-text"><div class="km-milestone-title">${m.title}</div><div class="km-milestone-desc">${m.desc}</div></div><div class="km-milestone-year">${m.year}</div></div>`).join('')}</div>`;
+function renderRecords() {
+  document.getElementById("records-list").innerHTML = `<div class="km-milestone-list">${milestones[currentRecTab].map(m => `<div class="km-milestone"><div class="km-milestone-icon">${m.icon}</div><div class="km-milestone-text"><div class="km-milestone-title">${m.title}</div><div class="km-milestone-desc">${m.desc}</div></div><div class="km-milestone-year">${m.year}</div></div>`).join('')}</div>`;
 }
 
-function goHome(){
-  document.getElementById("q-input").value="";
-  document.getElementById("answer-area").innerHTML="";
+// ── Nav ──────────────────────────────────────────────────────────
+function goHome() {
+  document.getElementById("q-input").value = "";
+  document.getElementById("answer-area").innerHTML = "";
   showTab('search');
 }
 
-let twitterLoaded=false;
-function loadTwitter(){
-  if(twitterLoaded) return;
-  twitterLoaded=true;
-  const s=document.createElement("script");
-  s.src="https://platform.twitter.com/widgets.js";
-  s.async=true;
+let twitterLoaded = false;
+function loadTwitter() {
+  if (twitterLoaded) return;
+  twitterLoaded = true;
+  const s = document.createElement("script");
+  s.src = "https://platform.twitter.com/widgets.js";
+  s.async = true;
   document.body.appendChild(s);
 }
 
-function showTab(name){
-  ["search","players","records","standings","feed"].forEach(t=>{
-    document.getElementById("tab-"+t).style.display=t===name?"":"none";
+function showTab(name) {
+  ["search", "players", "records", "standings", "feed"].forEach(t => {
+    document.getElementById("tab-" + t).style.display = t === name ? "" : "none";
   });
-  document.querySelectorAll(".km-nav button").forEach((b,i)=>{
-    b.classList.toggle("active",["search","players","records","standings","feed"][i]===name);
+  document.querySelectorAll(".km-nav button").forEach((b, i) => {
+    b.classList.toggle("active", ["search", "players", "records", "standings", "feed"][i] === name);
   });
-  if(name==="search"){loadHomeStandings();loadTwitter();}
-  if(name==="players") renderPlayers();
-  if(name==="records") renderRecords();
-  if(name==="standings"&&!fullStandingsLoaded) loadFullStandings();
-  if(name==="feed") loadTwitter();
+  if (name === "search") { loadHomeStandings(); loadTwitter(); }
+  if (name === "players") renderPlayers();
+  if (name === "records") renderRecords();
+  if (name === "standings" && !fullStandingsLoaded) loadFullStandings();
+  if (name === "feed") loadTwitter();
 }
 
 loadHomeStandings();
