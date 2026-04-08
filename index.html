@@ -13,7 +13,7 @@
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #111; min-height: 100vh; color: #f0ede6; }
 .km-header { background: #000; border-bottom: 1px solid #B4975A44; padding: 12px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
 .km-logo-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; gap: 10px; }
-.km-logo { height: 32px; object-fit: contain; }
+.km-logo { height: 48px; object-fit: contain; }
 .km-logo-text { color: #B4975A; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
 .km-nav { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
 .km-nav button { background: transparent; border: 1px solid #333; color: #aaa; font-size: 13px; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
@@ -100,8 +100,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 <div class="km-header">
   <button class="km-logo-btn" onclick="goHome()" title="Home">
-    <img class="km-logo" src="logo.png" alt="KnightsMuse" onerror="this.style.display='none';this.nextElementSibling.style.display='inline';" />
-    <span class="km-logo-text" style="display:none;">KnightsMuse</span>
+    <img class="km-logo" src="logo.png" alt="KnightsMuse" style="filter: brightness(0) invert(1);" />
   </button>
   <nav class="km-nav">
     <button class="active" onclick="showTab('search')">Home</button>
